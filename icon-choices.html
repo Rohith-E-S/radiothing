@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RadioThing — 10 Icon Directions</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+  *{box-sizing:border-box}
+  body{margin:0;background:#050507;color:#fff;font-family:'JetBrains Mono',monospace}
+  header{max-width:1100px;margin:0 auto;padding:32px 24px 8px}
+  header h1{font-size:11px;letter-spacing:3px;color:#FF3344;margin:0}
+  header h2{font-size:28px;letter-spacing:2px;margin:8px 0 6px}
+  header p{color:#9aa0a6;font-size:12px;line-height:1.6;max-width:680px;margin:0}
+  .bar{height:1px;background:#232326;margin:20px 0}
+  .grid{max-width:1100px;margin:0 auto;padding:0 24px 40px;display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+  @media(min-width:860px){.grid{grid-template-columns:repeat(5,1fr)}}
+  .card{background:#121214;border:1px solid #232326;border-radius:18px;padding:16px 14px 14px;cursor:pointer;transition:border-color .2s, transform .2s}
+  .card:hover{border-color:#3a3a3e;transform:translateY(-2px)}
+  .card.selected{border-color:#FF3344;box-shadow:0 0 0 1px #FF3344, 0 12px 40px rgba(255,51,68,.18)}
+  .frame{aspect-ratio:1;background:#050507;border:1px solid #1a1a1e;border-radius:14px;display:grid;place-items:center;padding:18px}
+  .frame svg{width:100%;height:100%;display:block}
+  .meta{margin-top:12px}
+  .num{font-size:9px;letter-spacing:1.2px;color:#6b7280}
+  .name{font-size:11px;letter-spacing:.8px;font-weight:700;margin:4px 0 4px;line-height:1.2}
+  .desc{font-size:10px;line-height:1.5;color:#9aa0a6;min-height:36px}
+  .foot{max-width:1100px;margin:0 auto;padding:0 24px 32px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .btn{background:#FF3344;color:#fff;border:1px solid #FF3344;border-radius:999px;padding:12px 18px;font-family:inherit;font-weight:700;letter-spacing:1px;font-size:11px;cursor:pointer}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .hint{font-size:11px;color:#6b7280}
+  .chosen{font-size:11px;color:#FF3344;letter-spacing:.8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>RADIOTHING — ICON WORKSHOP</h1>
+  <h2>10 HIGH-RES BENCH MARKS</h2>
+  <p>All in <b>BLACK LAB</b> — PureBlack #050507 / Panel #121214 / Grid #232326 / Signal Red #FF3344. 1024×1024 SVG, crisp at 48dp launcher and 20dp notification. Click a card to select. Based on your reference (circular blue ring + black field + FM + dial + three bars). Red + white only.</p>
+  <div class="bar"></div>
+</header>
+
+<div class="grid" id="grid">
+  <!-- 1 — Circular Scope (your ref, refined) -->
+  <div class="card" data-id="1">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="54" cy="54" r="44" fill="none" stroke="#7BA7BE" stroke-width="5.5"/>
+        <circle cx="54" cy="54" r="36" fill="#0A0A0C" stroke="#232326" stroke-width="1.2"/>
+        <g fill="#fff">
+          <rect x="38" y="48" width="3.2" height="14" rx="1"/><rect x="43.5" y="48" width="3.2" height="14" rx="1"/><rect x="49" y="48" width="3.2" height="14" rx="1"/>
+        </g>
+        <g stroke="#fff" stroke-width="1.4" stroke-linecap="round">
+          <path d="M54 38 L68 28" fill="none"/><circle cx="68" cy="28" r="1.8" fill="#fff" stroke="none"/>
+          <circle cx="54" cy="54" r="9" fill="none"/><path d="M54 54 L62 48" stroke="#fff" stroke-width="1.3"/>
+        </g>
+        <circle cx="72" cy="38" r="3" fill="#FF3344"/>
+        <text x="64" y="66" fill="#fff" font-family="monospace" font-size="5.5" letter-spacing="1" text-anchor="middle">FM</text>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">01 — CIRCULAR SCOPE</div><div class="name">Your ref, LAB-corrected</div><div class="desc">Blue ring → steel #7BA7BE, black field, 3-bar grille, dial + needle + red live dot, FM. Closest to your screenshot.</div></div>
+  </div>
+
+  <!-- 2 — Pill Bench (current) -->
+  <div class="card" data-id="2">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="18" y="40" width="72" height="28" rx="10" fill="#111214" stroke="#232326" stroke-width="1.2"/>
+        <rect x="28" y="52" width="3" height="16" rx="1" fill="#fff"/><rect x="34" y="52" width="3" height="16" rx="1" fill="#fff"/><rect x="40" y="52" width="3" height="16" rx="1" fill="#fff"/>
+        <circle cx="68" cy="58" r="7.5" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M68 58 L73 53" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/><circle cx="68" cy="58" r="1.5" fill="#fff"/>
+        <circle cx="80" cy="50" r="2.2" fill="#FF3344"/><text x="68" y="76" fill="#B3FFFFFF" font-family="monospace" font-size="3.8" text-anchor="middle">FM</text>
+        <path d="M76 40 L86 26" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><circle cx="86" cy="26" r="1.7" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">02 — PILL BENCH</div><div class="name">Current minimal FM</div><div class="desc">Rounded pill body, 3-bar grille, dial + needle, antenna, FM label. The one shipping now.</div></div>
+  </div>
+
+  <!-- 3 — Dot-R Bench -->
+  <div class="card" data-id="3">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="22" y="32" width="64" height="48" rx="8" fill="#111214" stroke="#232326" stroke-width="1.2"/>
+        <!-- R in dots -->
+        <g fill="#fff">
+          <circle cx="38" cy="42" r="1.9"/><circle cx="44" cy="42" r="1.9"/><circle cx="50" cy="42" r="1.9"/><circle cx="56" cy="42" r="1.9"/>
+          <circle cx="38" cy="48" r="1.9"/><circle cx="62" cy="48" r="1.9"/>
+          <circle cx="38" cy="54" r="1.9"/><circle cx="62" cy="54" r="1.9"/>
+          <circle cx="38" cy="60" r="1.9"/><circle cx="44" cy="60" r="1.9"/><circle cx="50" cy="60" r="1.9"/><circle cx="56" cy="60" r="1.9"/>
+          <circle cx="38" cy="66" r="1.9"/><circle cx="52" cy="66" r="1.9"/>
+          <circle cx="38" cy="72" r="1.9"/><circle cx="58" cy="66" r="1.9"/><circle cx="62" cy="72" r="1.9"/>
+        </g>
+        <circle cx="72" cy="34" r="3.2" fill="#FF3344"/>
+        <text x="54" y="88" fill="#B3FFFFFF" font-family="monospace" font-size="3.6" text-anchor="middle">THING</text>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">03 — DOT R</div><div class="name">Ndot bench</div><div class="desc">5×7 dot-matrix R (previous) with live red — too Nothing-like per your note.</div></div>
+  </div>
+
+  <!-- 4 — Waveform Crest -->
+  <div class="card" data-id="4">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="38" width="68" height="36" rx="8" fill="#111214" stroke="#232326" stroke-width="1.2"/>
+        <path d="M26 56 Q36 40 46 56 T66 56 T86 56" fill="none" stroke="#FF3344" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M26 56 Q36 40 46 56 T66 56 T86 56" fill="none" stroke="#FF3344" stroke-width="5" opacity="0.18"/>
+        <circle cx="80" cy="46" r="2" fill="#FF3344"/>
+        <text x="54" y="82" fill="#fff" font-family="monospace" font-size="4" text-anchor="middle">RADIO</text>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">04 — WAVEFORM</div><div class="name">Scope trace</div><div class="desc">Single red oscilloscope crest inside pill — ties to the live CRT equalizer.</div></div>
+  </div>
+
+  <!-- 5 — Speaker Stack -->
+  <div class="card" data-id="5">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="28" y="30" width="52" height="52" rx="10" fill="#111214" stroke="#232326" stroke-width="1.2"/>
+        <circle cx="54" cy="56" r="14" fill="none" stroke="#fff" stroke-width="1.3"/>
+        <circle cx="54" cy="56" r="7" fill="none" stroke="#fff" stroke-width="1"/>
+        <circle cx="54" cy="56" r="1.8" fill="#FF3344"/>
+        <g stroke="#fff" stroke-width="0.9" opacity="0.9">
+          <path d="M30 38 L50 28"/><path d="M78 38 L58 28"/>
+        </g>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">05 — CONE</div><div class="name">Speaker cone</div><div class="desc">Concentric circles = cone + antenna as top V — tactile, retro bench.</div></div>
+  </div>
+
+  <!-- 6 — Dial + Scale -->
+  <div class="card" data-id="6">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="18" y="44" width="72" height="24" rx="6" fill="#0A0A0C" stroke="#232326" stroke-width="1.2"/>
+        <g stroke="#fff" stroke-width="1">
+          <path d="M24 56 h60"/><circle cx="42" cy="56" r="1.2" fill="#fff"/><circle cx="54" cy="56" r="1.2" fill="#FF3344" stroke="#FF3344"/><circle cx="66" cy="56" r="1.2" fill="#fff"/>
+          <path d="M42 52 v8 M54 50 v10 M66 52 v8" stroke="#fff" stroke-width="1"/>
+        </g>
+        <text x="54" y="38" fill="#fff" font-family="monospace" font-size="5" text-anchor="middle">88 · 98 · 108</text>
+        <circle cx="78" cy="34" r="2" fill="#FF3344"/>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">06 — SCALE</div><div class="name">Tuning scale</div><div class="desc">FM dial ruler + needle + 88-108 marks — the tuning ritual itself.</div></div>
+  </div>
+
+  <!-- 7 — Tower Signal -->
+  <div class="card" data-id="7">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <path d="M54 72 L48 44 L52 44 L54 36 L56 44 L60 44 Z" fill="none" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/>
+        <circle cx="54" cy="32" r="1.8" fill="#FF3344"/>
+        <g stroke="#FF3344" stroke-width="1" fill="none" opacity="0.95">
+          <path d="M62 40 a12 12 0 0 1 8 8"/><path d="M62 48 a8 8 0 0 1 6 6"/><path d="M46 40 a12 12 0 0 0 -8 8"/><path d="M46 48 a8 8 0 0 0 -6 6"/>
+        </g>
+        <text x="54" y="84" fill="#B3FFFFFF" font-family="monospace" font-size="3.5" text-anchor="middle">FM</text>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">07 — TOWER</div><div class="name">Broadcast tower</div><div class="desc">Minimal tower + radiating arcs — open, global, Radio Browser.</div></div>
+  </div>
+
+  <!-- 8 — Cassette -->
+  <div class="card" data-id="8">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="22" y="36" width="64" height="36" rx="4" fill="#111214" stroke="#232326" stroke-width="1.2"/>
+        <rect x="28" y="44" width="52" height="10" rx="2" fill="#050507" stroke="#232326" stroke-width="0.8"/>
+        <circle cx="40" cy="61" r="6" fill="none" stroke="#fff" stroke-width="1.2"/><circle cx="68" cy="61" r="6" fill="none" stroke="#fff" stroke-width="1.2"/>
+        <circle cx="40" cy="61" r="1.8" fill="#fff"/><circle cx="68" cy="61" r="1.8" fill="#fff"/>
+        <circle cx="76" cy="40" r="2" fill="#FF3344"/>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">08 — CASSETTE</div><div class="name">Tape deck</div><div class="desc">Two reels + label window — collection, not just tune.</div></div>
+  </div>
+
+  <!-- 9 — Equalizer Dots -->
+  <div class="card" data-id="9">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="36" width="68" height="40" rx="8" fill="#0A0A0C" stroke="#232326" stroke-width="1.2"/>
+        <g fill="#FF3344">
+          <g opacity="0.95"><circle cx="30" cy="68" r="1.4"/><circle cx="30" cy="64" r="1.4"/><circle cx="30" cy="60" r="1.4"/><circle cx="30" cy="56" r="1.4"/><circle cx="30" cy="52" r="1.4"/><circle cx="30" cy="48" r="1.4"/></g>
+          <g opacity="0.9"><circle cx="40" cy="68" r="1.4"/><circle cx="40" cy="64" r="1.4"/><circle cx="40" cy="60" r="1.4"/><circle cx="40" cy="56" r="1.4"/><circle cx="40" cy="52" r="1.4"/></g>
+          <g opacity="0.85"><circle cx="50" cy="68" r="1.4"/><circle cx="50" cy="64" r="1.4"/><circle cx="50" cy="60" r="1.4"/><circle cx="50" cy="56" r="1.4"/></g>
+          <g opacity="0.8"><circle cx="60" cy="68" r="1.4"/><circle cx="60" cy="64" r="1.4"/><circle cx="60" cy="60" r="1.4"/></g>
+          <g opacity="0.75"><circle cx="70" cy="68" r="1.4"/><circle cx="70" cy="64" r="1.4"/></g>
+          <g opacity="0.7"><circle cx="80" cy="68" r="1.4"/></g>
+        </g>
+        <circle cx="78" cy="40" r="2" fill="#fff"/>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">09 — EQUALIZER</div><div class="name">Dotted bars</div><div class="desc">The CRT itself — 6 dotted bars, red, like the new visualizer.</div></div>
+  </div>
+
+  <!-- 10 — Transistor Knob -->
+  <div class="card" data-id="10">
+    <div class="frame">
+      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
+        <rect x="24" y="40" width="60" height="32" rx="7" fill="#111214" stroke="#232326" stroke-width="1.2"/>
+        <circle cx="66" cy="56" r="11" fill="#050507" stroke="#fff" stroke-width="1.3"/>
+        <circle cx="66" cy="56" r="2" fill="#FF3344"/>
+        <path d="M66 56 L66 47" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+        <g fill="#fff" opacity="0.9">
+          <rect x="34" y="54" width="18" height="2" rx="1"/><rect x="34" y="58" width="18" height="2" rx="1"/><rect x="34" y="62" width="18" height="2" rx="1"/>
+        </g>
+      </svg>
+    </div>
+    <div class="meta"><div class="num">10 — TRANSISTOR</div><div class="name">Knob + grille</div><div class="desc">Braun/Rams knob + 3-line grille — Rams minimal transistor.</div></div>
+  </div>
+</div>
+
+<div class="foot">
+  <button class="btn" id="confirm" disabled>SELECT AN ICON FIRST</button>
+  <span class="hint" id="hint">Click a card. I’ll wire the one you pick to ic_launcher.</span>
+  <span class="chosen" id="chosen"></span>
+</div>
+
+<script>
+const cards=[...document.querySelectorAll('.card')];
+const btn=document.getElementById('confirm');
+const hint=document.getElementById('hint');
+const chosen=document.getElementById('chosen');
+let sel=null;
+cards.forEach(c=>{
+  c.addEventListener('click',()=>{
+    cards.forEach(x=>x.classList.remove('selected'));
+    c.classList.add('selected');
+    sel=c.dataset.id;
+    btn.disabled=false;
+    btn.textContent='USE ICON '+sel.padStart(2,'0');
+    hint.textContent='Ready — tell me "use '+sel+'" or press the button.';
+    chosen.textContent='Selected '+sel+' — '+c.querySelector('.name').textContent;
+  });
+});
+btn.addEventListener('click',()=>{
+  if(!sel) return;
+  const names={1:'Circular Scope',2:'Pill Bench',3:'Dot R',4:'Waveform',5:'Cone',6:'Scale',7:'Tower',8:'Cassette',9:'Equalizer',10:'Transistor'};
+  alert('You picked '+sel+' — '+names[sel]+'.\nReply "use '+sel+'" and I\'ll generate the 1024×1024 PNG + adaptive vector, wiring it to the app.');
+});
+</script>
+</body>
+</html>
