@@ -1,9 +1,42 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cassette — legible at 48dp drawer, 20dp notification -->
+    <!-- Body — Panel pill, thick chrome for small sizes -->
     <path
-        android:fillColor="#FF0000"
-        android:pathData="M3,20.5v-2h18v2L3,20.5z M3.06,17.15l-1.92,-0.53 3.8,-13.78 1.93,0.53L3.06,17.15z M20.73,8.02l-1.93,-0.51 -1.41,5.29 1.93,0.51 1.41,-5.29z M13.62,11.83l-1.97,-0.34 -0.66,3.84 1.97,0.34 0.66,-3.84z M8.13,10.87l-1.97,-0.34 -1.18,6.86 1.97,0.34 1.18,-6.86z"/>
+        android:fillColor="#121214"
+        android:strokeColor="#2A2A2E"
+        android:strokeWidth="1.8"
+        android:pathData="M22,38 h64 a6,6 0 0,1 6,6 v22 a6,6 0 0,1 -6,6 h-64 a6,6 0 0,1 -6,-6 v-22 a6,6 0 0,1 6,-6 z" />
+    <!-- Label window — high-contrast, inset -->
+    <path
+        android:fillColor="#050507"
+        android:strokeColor="#232326"
+        android:strokeWidth="1.2"
+        android:pathData="M28,44 h52 a2.5,2.5 0 0,1 2.5,2.5 v8 a2.5,2.5 0 0,1 -2.5,2.5 h-52 a2.5,2.5 0 0,1 -2.5,-2.5 v-8 a2.5,2.5 0 0,1 2.5,-2.5 z" />
+    <!-- Label text hint — three short white bars (like tape label) -->
+    <path android:fillColor="#FFFFFF" android:pathData="M32,48 h14 v1.8 h-14 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M32,51 h10 v1.2 h-10 z" />
+    <!-- Reels — large, thick stroke for legibility at 48dp -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:pathData="M40,62 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.2"
+        android:pathData="M68,62 m-8,0 a8,8 0 1,0 16,0 a8,8 0 1,0 -16,0" />
+    <!-- Reel hubs — solid white, ensures visibility at tiny sizes -->
+    <path android:fillColor="#FFFFFF" android:pathData="M40,62 m-2.6,0 a2.6,2.6 0 1,0 5.2,0 a2.6,2.6 0 1,0 -5.2,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M68,62 m-2.6,0 a2.6,2.6 0 1,0 5.2,0 a2.6,2.6 0 1,0 -5.2,0" />
+    <!-- Reel sprockets — 3 small ticks per reel, still visible at 48dp -->
+    <path android:fillColor="#FFFFFF" android:pathData="M40,55.5 h1.2 v3 h-1.2 z M36.8,60 h3 v1.2 h-3 z M42,64.5 h1.2 v3 h-1.2 z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M68,55.5 h1.2 v3 h-1.2 z M64.8,60 h3 v1.2 h-3 z M70,64.5 h1.2 v3 h-1.2 z" />
+    <!-- Live dot — Signal Red, top-right of cassette, with white ring for contrast on black -->
+    <path android:fillColor="#FF3344" android:pathData="M80,34 m-3.2,0 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="0.9" android:pathData="M80,34 m-3.2,0 a3.2,3.2 0 1,0 6.4,0 a3.2,3.2 0 1,0 -6.4,0" />
 </vector>
