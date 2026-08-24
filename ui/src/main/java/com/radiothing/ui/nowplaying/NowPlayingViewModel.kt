@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.radiothing.domain.model.PlayerState
 import com.radiothing.domain.model.RadioStation
+import com.radiothing.domain.repository.FavoriteRepository
+import com.radiothing.domain.usecase.ToggleFavoriteUseCase
 import com.radiothing.player.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -14,26 +16,42 @@ data class NowPlayingUiState(
     val currentStation: RadioStation? = null,
     val isPlaying: Boolean = false,
     val isBuffering: Boolean = false,
-    val volume: Float = 0.5f
+    val volume: Float = 0.5f,
+    val error: String? = null,
+    val queue: List<RadioStation> = emptyList(),
+    val queueIndex: Int = -1,
+    val sleepRemainingMs: Long = 0L
 )
 
 @HiltViewModel
 class NowPlayingViewModel @Inject constructor(
-    private val playerManager: PlayerManager
+    private val playerManager: PlayerManager,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val favoriteRepository: FavoriteRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NowPlayingUiState())
-    
+
+    val audioSessionId: StateFlow<Int> = playerManager.audioSessionId
+
     val uiState: StateFlow<NowPlayingUiState> = combine(
         _uiState,
         playerManager.playerState,
-        playerManager.volume
-    ) { state, player, volume ->
+        playerManager.volume,
+        playerManager.sleepTimerRemaining,
+        favoriteRepository.getFavoriteIds()
+    ) { state, player, volume, sleepMs, favIds ->
+        val enrichedStation = player.currentStation?.let { it.copy(isFavorite = favIds.contains(it.stationUuid)) }
+        val enrichedQueue = player.queue.map { it.copy(isFavorite = favIds.contains(it.stationUuid)) }
         state.copy(
-            currentStation = player.currentStation,
+            currentStation = enrichedStation,
             isPlaying = player.isPlaying,
             isBuffering = player.isBuffering,
-            volume = volume
+            volume = volume,
+            error = player.error,
+            queue = enrichedQueue,
+            queueIndex = player.queueIndex,
+            sleepRemainingMs = sleepMs
         )
     }.stateIn(
         scope = viewModelScope,
@@ -49,6 +67,18 @@ class NowPlayingViewModel @Inject constructor(
             playerManager.resume()
         }
     }
+
+    fun next() = playerManager.next()
+    fun previous() = playerManager.previous()
+    fun seekInQueue(index: Int) = playerManager.seekInQueue(index)
+
+    fun toggleFavorite() {
+        val station = uiState.value.currentStation ?: return
+        viewModelScope.launch { toggleFavoriteUseCase(station) }
+    }
+
+    fun startSleepTimer(durationMs: Long) = playerManager.startSleepTimer(durationMs)
+    fun cancelSleepTimer() = playerManager.cancelSleepTimer()
 
     fun setVolume(volume: Float) {
         playerManager.setVolume(volume)
