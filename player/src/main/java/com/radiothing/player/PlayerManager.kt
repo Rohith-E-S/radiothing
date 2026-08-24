@@ -38,6 +38,10 @@ interface PlayerManager {
     fun consumeResumeCommand()
     fun consumeVolumeCommand()
 
+    // Audio session for real visualizer
+    val audioSessionId: StateFlow<Int>
+    fun onServiceAudioSessionIdChanged(sessionId: Int)
+
     // Called by service to push state back up
     fun onServicePlayingChanged(isPlaying: Boolean, player: Player?)
     fun onServiceBufferingChanged(isBuffering: Boolean)

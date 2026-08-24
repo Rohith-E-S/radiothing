@@ -1,10 +1,17 @@
 package com.radiothing.player.service
 
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
+import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -14,6 +21,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.CommandButton
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
@@ -54,9 +62,17 @@ class RadioPlaybackService : MediaSessionService() {
     private var retryCount = 0
     private val maxRetries = 3
     private var currentStation: RadioStation? = null
+    private var wifiLock: WifiManager.WifiLock? = null
+    private var notificationProvider: DefaultMediaNotificationProvider? = null
 
     override fun onCreate() {
         super.onCreate()
+
+        // — Keep CPU + Wi-Fi alive for hours on all OEMs (Xiaomi, Samsung, OnePlus doze aggressively)
+        try {
+            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "RadioThing::WifiLock").apply { setReferenceCounted(false) }
+        } catch (_: Exception) {}
 
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
@@ -69,18 +85,25 @@ class RadioPlaybackService : MediaSessionService() {
         val audioAttributes = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setAllowedCapturePolicy(C.ALLOW_CAPTURE_BY_ALL)
             .build()
 
         exoPlayer = ExoPlayer.Builder(this)
             .setLoadControl(loadControl)
             .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
             .setHandleAudioBecomingNoisy(true) // pause on headphone unplug
+            .setWakeMode(C.WAKE_MODE_NETWORK) // CPU wake lock for long playback
             .build()
 
         exoPlayer!!.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 playerManager.onServicePlayingChanged(isPlaying, exoPlayer)
-                if (isPlaying) retryCount = 0
+                if (isPlaying) {
+                    retryCount = 0
+                    try { wifiLock?.acquire() } catch (_: Exception) {}
+                } else {
+                    try { if (wifiLock?.isHeld == true) wifiLock?.release() } catch (_: Exception) {}
+                }
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -102,7 +125,13 @@ class RadioPlaybackService : MediaSessionService() {
                     playerManager.onServiceError(error.message)
                 }
             }
+
+            override fun onAudioSessionIdChanged(audioSessionId: Int) {
+                playerManager.onServiceAudioSessionIdChanged(audioSessionId)
+            }
         })
+        // push initial session id
+        playerManager.onServiceAudioSessionIdChanged(exoPlayer!!.audioSessionId)
 
         // Expose this player to PlayerManager so UI can observe it
         playerManager.attachServicePlayer(exoPlayer!!)
@@ -123,6 +152,23 @@ class RadioPlaybackService : MediaSessionService() {
         val session = sessionBuilder.build()
         mediaSession = session
         addSession(session)
+
+        // — Full media notification: artwork, lock-screen, Android Auto, Wear OS, Bluetooth
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val channel = NotificationChannel("radio_playback", "Radio Playback", NotificationManager.IMPORTANCE_LOW).apply {
+                    description = "RadioThing ongoing playback — survives Doze on Xiaomi/Samsung/OnePlus"
+                    setShowBadge(false)
+                    lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                }
+                nm.createNotificationChannel(channel)
+            }
+            // Media3 will keep the service foreground with a rich notification (title/artist/artwork, play/pause/next/prev)
+            val provider = DefaultMediaNotificationProvider(this)
+            try { provider.setSmallIcon(android.R.drawable.ic_media_play) } catch (_: Exception) {}
+            setMediaNotificationProvider(provider)
+        } catch (_: Exception) {}
 
         // Observe play commands from PlayerManager (from UI)
         serviceScope.launch {
@@ -153,10 +199,16 @@ class RadioPlaybackService : MediaSessionService() {
         currentStation = station
         retryCount = 0
         val url = if (station.urlResolved.isNotEmpty()) station.urlResolved else station.url
+        val subtitle = buildString {
+            if (station.bitrate > 0) append("${station.bitrate}k")
+            if (station.codec.isNotEmpty()) { if (isNotEmpty()) append(" • "); append(station.codec.uppercase()) }
+            if (station.country.isNotEmpty()) { if (isNotEmpty()) append(" • "); append(station.country) }
+            if (isEmpty()) append(station.tags.take(28).ifEmpty { "LIVE" })
+        }
         val metadataBuilder = MediaMetadata.Builder()
             .setTitle(station.name)
-            .setArtist(station.tags.take(32).ifEmpty { station.country })
-            .setGenre(station.country)
+            .setArtist(subtitle)
+            .setAlbumTitle(station.country.ifEmpty { "RadioThing • LIVE" })
 
         if (station.favicon.isNotBlank()) {
             runCatching { Uri.parse(station.favicon) }.getOrNull()?.let { artworkUri ->
@@ -193,16 +245,26 @@ class RadioPlaybackService : MediaSessionService() {
         playStation(station, emptyList(), 0)
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        // START_STICKY — survives swipe-away and OEM task killers for hours; MediaSession keeps foreground via notification
+        return START_STICKY
+    }
+
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        // Keep alive if playing — critical for Xiaomi/MIUI, OnePlus, Samsung which nuke services on task remove
         val player = mediaSession?.player
         if (player == null || !player.playWhenReady || player.mediaItemCount == 0) {
             stopSelf()
         }
+        // else: let MediaSession keep foreground notification alive for hours (Doze + App Standby)
     }
 
     override fun onDestroy() {
+        try { if (wifiLock?.isHeld == true) wifiLock?.release() } catch (_: Exception) {}
+        wifiLock = null
         mediaSession?.let { session ->
             removeSession(session)
             session.player.release()

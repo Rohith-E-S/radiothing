@@ -50,6 +50,12 @@ class PlayerManagerImpl @Inject constructor(
     private val _volumeCommand = MutableStateFlow(-1f)
     override val volumeCommand: StateFlow<Float> = _volumeCommand.asStateFlow()
 
+    private val _audioSessionId = MutableStateFlow(0)
+    override val audioSessionId: StateFlow<Int> = _audioSessionId.asStateFlow()
+    override fun onServiceAudioSessionIdChanged(sessionId: Int) {
+        _audioSessionId.value = sessionId
+    }
+
     // --- Internal ---
     private var crossfadeDurationMs = 0L
 
