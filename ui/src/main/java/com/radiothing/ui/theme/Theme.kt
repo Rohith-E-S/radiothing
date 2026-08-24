@@ -18,12 +18,17 @@ val LocalRadioShapes = staticCompositionLocalOf { RadioShapes }
 private val DarkColorScheme = darkColorScheme(
     primary = BrightRed,
     secondary = LiveRed,
+    tertiary = SignalAmber,
     background = PureBlack,
-    surface = DarkGray,
+    surface = Panel,
+    surfaceVariant = GridLine,
+    outline = GridLine,
+    outlineVariant = Hairline,
     onPrimary = TextWhite100,
     onSecondary = TextWhite100,
     onBackground = TextWhite100,
-    onSurface = TextWhite100
+    onSurface = TextWhite100,
+    onSurfaceVariant = TextWhite70
 )
 
 @Composable

@@ -2,102 +2,117 @@ package com.radiothing.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.radiothing.ui.R
 
-val TitleFont = FontFamily.Monospace
-val BodyFont = FontFamily.Default // Fallback to sans-serif
+// Ndot57 — Nothing dot-matrix display face. Applied to every label, header and station name for instrument character.
+val Ndot57 = FontFamily(Font(R.font.ndot57_regular, FontWeight.Normal))
+
+val TitleFont = Ndot57
+val MonoFont = Ndot57
+val BodyFont = FontFamily.Default
+val DisplayFont = Ndot57
 
 val RadioTypography = Typography(
     displayLarge = TextStyle(
-        fontFamily = TitleFont,
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Bold,
-        fontSize = 57.sp,
-        letterSpacing = 4.sp
+        fontSize = 48.sp,
+        letterSpacing = 3.sp,
+        lineHeight = 48.sp
     ),
     displayMedium = TextStyle(
-        fontFamily = TitleFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 45.sp,
-        letterSpacing = 4.sp
-    ),
-    displaySmall = TextStyle(
-        fontFamily = TitleFont,
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Bold,
         fontSize = 36.sp,
-        letterSpacing = 4.sp
+        letterSpacing = 2.5.sp,
+        lineHeight = 36.sp
     ),
-    headlineLarge = TextStyle(
-        fontFamily = TitleFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        letterSpacing = 2.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = TitleFont,
+    displaySmall = TextStyle(
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
-        letterSpacing = 2.sp
+        letterSpacing = 2.sp,
+        lineHeight = 30.sp
     ),
-    headlineSmall = TextStyle(
-        fontFamily = TitleFont,
+    headlineLarge = TextStyle(
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
-        letterSpacing = 2.sp
+        letterSpacing = 1.5.sp,
+        lineHeight = 26.sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        letterSpacing = 1.2.sp,
+        lineHeight = 22.sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        letterSpacing = 1.sp,
+        lineHeight = 18.sp
     ),
     titleLarge = TextStyle(
-        fontFamily = TitleFont,
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Medium,
-        fontSize = 22.sp,
-        letterSpacing = 2.sp
+        fontSize = 18.sp,
+        letterSpacing = 1.sp
     ),
     titleMedium = TextStyle(
-        fontFamily = TitleFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        letterSpacing = 2.sp
-    ),
-    titleSmall = TextStyle(
-        fontFamily = TitleFont,
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        letterSpacing = 2.sp
+        letterSpacing = 0.8.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        letterSpacing = 0.8.sp
     ),
     bodyLarge = TextStyle(
         fontFamily = BodyFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        letterSpacing = 1.sp
+        fontSize = 15.sp,
+        letterSpacing = 0.2.sp,
+        lineHeight = 22.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = BodyFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        letterSpacing = 1.sp
+        fontSize = 13.sp,
+        letterSpacing = 0.2.sp,
+        lineHeight = 19.sp
     ),
     bodySmall = TextStyle(
-        fontFamily = BodyFont,
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        letterSpacing = 1.sp
+        fontSize = 11.sp,
+        letterSpacing = 0.6.sp
     ),
     labelLarge = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        letterSpacing = 1.sp
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 11.sp,
+        letterSpacing = 1.4.sp
     ),
     labelMedium = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        letterSpacing = 1.sp
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.sp,
+        letterSpacing = 1.2.sp
     ),
     labelSmall = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        letterSpacing = 1.sp
+        fontFamily = MonoFont,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp,
+        letterSpacing = 0.8.sp
     )
 )
