@@ -1,239 +1,554 @@
 package com.radiothing.ui.nowplaying
 
+import android.content.Intent
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import com.radiothing.ui.components.countryCodeToEmoji
+import com.radiothing.ui.theme.BrightRed
+import com.radiothing.ui.theme.GridLine
+import com.radiothing.ui.theme.Hairline
+import com.radiothing.ui.theme.Ink
+import com.radiothing.ui.theme.Panel
+import com.radiothing.ui.theme.PureBlack
+import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.theme.Ndot57
 
+// ── BLACK LAB / OSCILLOSCOPE BENCH ──
+// Impeccable surface: whole surface inside BLACK LAB world, composition = Oscilloscope Lab Bench (dealt 4 lead, seed 2426ab76)
+// Thesis: radio as live specimen under the scope — CRT is the hero, not a card. Refuses stacked-card feed.
+// Pill everywhere (100dp), Ndot57, red = live only, grid = 1dp hairline.
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NowPlayingScreen(
-    viewModel: NowPlayingViewModel = viewModel(),
+    viewModel: NowPlayingViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onBack: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val nothingRed = Color(0xFFFF2D2D)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val audioSessionId by viewModel.audioSessionId.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    var lastHapticBlock by remember { mutableIntStateOf(-1) }
+    var showQueue by remember { mutableStateOf(false) }
+    var showSleep by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
-            .statusBarsPadding()
+            .background(PureBlack)
+            .windowInsetsPadding(WindowInsets.statusBars)
             .navigationBarsPadding()
-            .padding(horizontal = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = 16.dp)
     ) {
-        // Top bar
+        // ── Header — 48dp, pill-aware, no hairline divider (scope carries chrome)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .height(48.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = onBack, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White, modifier = Modifier.size(22.dp))
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("SCOPE", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 2.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val inf = rememberInfiniteTransition(label = "live")
+                    val a by inf.animateFloat(0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "a")
+                    Box(Modifier.size(6.dp).clip(CircleShape).background(if (uiState.isPlaying) BrightRed.copy(alpha = a) else Color(0xFF333333)))
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        when {
+                            uiState.isBuffering -> "TUNING"
+                            uiState.isPlaying -> "LIVE"
+                            uiState.currentStation == null -> "IDLE"
+                            else -> "ARMED"
+                        },
+                        color = if (uiState.isPlaying) BrightRed else TextWhite35,
+                        fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp
+                    )
+                }
+            }
+            // Favorite — pill 48dp, heart only (no halo), red when saved
+            IconButton(onClick = { viewModel.toggleFavorite() }, modifier = Modifier.size(48.dp)) {
+                val fav = uiState.currentStation?.isFavorite == true
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White
+                    if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = if (fav) BrightRed else TextWhite35,
+                    modifier = Modifier.size(22.dp)
                 )
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "NOW PLAYING",
-                    color = Color.White,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    letterSpacing = 2.sp
-                )
-            }
-            // Placeholder to keep "NOW PLAYING" centered
-            Spacer(modifier = Modifier.width(48.dp))
         }
 
-        // Thin red accent line
+        if (uiState.error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(Color(0xFF1A0A0A))
+                    .border(1.dp, BrightRed.copy(0.5f), RoundedCornerShape(100.dp))
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(uiState.error ?: "", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    TextButton(onClick = { viewModel.togglePlayPause() }) { Text("RETRY", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+
+        // ── CRT — hero fills flex so no bottom wasteland; grid + real equalizer
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(1.dp)
-                .background(nothingRed.copy(alpha = 0.4f))
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Station info
-        Text(
-            text = uiState.currentStation?.name?.uppercase() ?: "NO STATION SELECTED",
-            color = Color.White,
-            fontFamily = FontFamily.Monospace,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            letterSpacing = 1.sp,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Status line
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+                .weight(1f)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(20.dp))
+                .padding(10.dp)
         ) {
-            if (uiState.isPlaying) {
-                // Pulsing live dot
-                val infiniteTransition = rememberInfiniteTransition(label = "live")
-                val alpha by infiniteTransition.animateFloat(
-                    initialValue = 0.3f,
-                    targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(800),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "liveDot"
-                )
+            // CRT tube
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFF050507))
+                    .border(1.dp, Hairline, RoundedCornerShape(16.dp))
+            ) {
+                // Grid — hairline, behind waveform
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val stepX = size.width / 8
+                    val stepY = size.height / 4
+                    for (i in 1..7) {
+                        drawLine(color = Color(0xFF1A1A1E), start = Offset(stepX * i, 0f), end = Offset(stepX * i, size.height), strokeWidth = 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+                    }
+                    for (i in 1..3) {
+                        drawLine(color = Color(0xFF1A1A1E), start = Offset(0f, stepY * i), end = Offset(size.width, stepY * i), strokeWidth = 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+                    }
+                    // center cross
+                    drawLine(color = Color(0xFF232326), start = Offset(size.width / 2, 0f), end = Offset(size.width / 2, size.height), strokeWidth = 1f)
+                    drawLine(color = Color(0xFF232326), start = Offset(0f, size.height / 2), end = Offset(size.width, size.height / 2), strokeWidth = 1f)
+                }
+                // Equalizer — REAL FFT when available, dotted bars in RED+WHITE like reference image
+                StreamDotEqualizer(audioSessionId = audioSessionId, isPlaying = uiState.isPlaying, isBuffering = uiState.isBuffering, modifier = Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 8.dp))
+
+                // Station badge — pill, bottom-left inside CRT
                 Box(
                     modifier = Modifier
-                        .size(8.dp)
+                        .align(Alignment.BottomStart)
+                        .padding(12.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(Panel.copy(alpha = 0.92f))
+                        .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Ink)
+                                .border(1.dp, Hairline, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val favicon = uiState.currentStation?.favicon ?: ""
+                            if (favicon.isNotEmpty()) {
+                                AsyncImage(model = favicon, contentDescription = null, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+                            } else {
+                                Text(uiState.currentStation?.name?.take(2)?.uppercase() ?: "—", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                (uiState.currentStation?.bitrate?.takeIf { it > 0 }?.let { "${it}K" } ?: "LIVE") + (uiState.currentStation?.codec?.takeIf { it.isNotEmpty() }?.let { " • ${it.uppercase()}" } ?: ""),
+                                color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp
+                            )
+                            if (uiState.currentStation?.countryCode?.length == 2) {
+                                Text("${countryCodeToEmoji(uiState.currentStation!!.countryCode)} ${uiState.currentStation!!.countryCode.uppercase()}", color = Color.White, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+
+                // Sleep countdown — top-right pill inside CRT
+                if (uiState.sleepRemainingMs > 0) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(12.dp)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(BrightRed)
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text("${uiState.sleepRemainingMs / 60000}:${String.format("%02d", (uiState.sleepRemainingMs % 60000) / 1000)}", color = Color.White, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    }
+                }
+
+                if (uiState.isBuffering) {
+                    Box(Modifier.fillMaxSize().background(Color.Black.copy(0.45f)), contentAlignment = Alignment.Center) {
+                        val inf = rememberInfiniteTransition(label = "buf")
+                        val d by inf.animateValue(0, 3, Int.VectorConverter, infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Restart), label = "d")
+                        Text("●".repeat(d + 1), color = BrightRed, fontFamily = Ndot57, fontSize = 14.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // ── Dossier — station name as scope label, pill enclosure
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(100.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = uiState.currentStation?.name?.uppercase() ?: "NO SPECIMEN",
+                        color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 0.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (uiState.currentStation?.country?.isNotEmpty() == true) {
+                            Text(uiState.currentStation!!.country.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp, maxLines = 1)
+                        }
+                        if ((uiState.currentStation?.votes ?: 0) > 0) {
+                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                        if (uiState.queue.size > 1) {
+                            Text("${uiState.queueIndex + 1}/${uiState.queue.size} IN TRAY", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp)
+                        }
+                    }
+                }
+                // Share — pill 40dp, circular
+                IconButton(onClick = {
+                    uiState.currentStation?.let { s ->
+                        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "${s.name} - ${s.urlResolved.ifEmpty { s.url }}") }
+                        context.startActivity(Intent.createChooser(send, "Share specimen"))
+                    }
+                }, modifier = Modifier.size(40.dp)) {
+                    Icon(Icons.Default.Share, contentDescription = "Share", tint = TextWhite35, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
+
+        // Tags — horizontal pill row, scroll not needed (take 4)
+        val tags = uiState.currentStation?.tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.take(4) ?: emptyList()
+        if (tags.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                tags.forEach { tag ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Ink)
+                            .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(tag.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.6.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // ── Volume — single pill: blocks ARE the slider (tap or slide anywhere on the track)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(100.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("VOL", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+                Spacer(Modifier.width(10.dp))
+                val blocks = 12
+                val filled = (uiState.volume * blocks).toInt()
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .pointerInput(Unit) {
+                            detectTapGestures { offset ->
+                                val fraction = (offset.x / size.width).coerceIn(0f, 1f)
+                                val block = (fraction * 12).toInt()
+                                if (block != lastHapticBlock) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    lastHapticBlock = block
+                                }
+                                viewModel.setVolume(fraction)
+                            }
+                        }
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures { change, _ ->
+                                val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                                val block = (fraction * 12).toInt()
+                                if (block != lastHapticBlock) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                    lastHapticBlock = block
+                                }
+                                viewModel.setVolume(fraction)
+                                change.consume()
+                            }
+                        },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(blocks) { idx ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(100.dp))
+                                .background(if (idx < filled) BrightRed else Color(0xFF1A1A1E))
+                        )
+                    }
+                }
+                Spacer(Modifier.width(10.dp))
+                Text("${(uiState.volume * 100).toInt()}%", color = Color.White, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(Modifier.height(6.dp))
+
+        // ── Transport — primary pill, clear hierarchy: Prev / PLAY / Next only
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(100.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Prev — 56dp, labelled, disabled state muted
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.previous() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", tint = if (uiState.queue.size > 1) Color.White else Color(0xFF555555), modifier = Modifier.size(26.dp))
+                    Spacer(Modifier.height(2.dp))
+                    Text("PREV", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
+                }
+                // Play — 72dp hero, red, single focal point
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
                         .clip(CircleShape)
-                        .background(nothingRed.copy(alpha = alpha))
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "LIVE",
-                    color = nothingRed,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-            }
-            Text(
-                text = if (uiState.isBuffering) "BUFFERING..." else "${uiState.currentStation?.bitrate ?: "---"} KBPS",
-                color = Color.Gray,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 14.sp
-            )
-            if (uiState.currentStation?.countryCode?.isNotEmpty() == true) {
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = uiState.currentStation!!.countryCode.uppercase(),
-                    color = Color(0xFF555555),
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp
-                )
+                        .background(BrightRed)
+                        .clickable { viewModel.togglePlayPause() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = if (uiState.isPlaying) "Pause" else "Play", tint = Color.White, modifier = Modifier.size(32.dp))
+                }
+                // Next
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.next() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    Icon(Icons.Default.SkipNext, contentDescription = "Next", tint = if (uiState.queue.size > 1) Color.White else Color(0xFF555555), modifier = Modifier.size(26.dp))
+                    Spacer(Modifier.height(2.dp))
+                    Text("NEXT", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(Modifier.height(6.dp))
 
-        // Volume slider
-        Row(
+        // ── Utility — secondary pill, distinct from transport, labelled, not crowded
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .clip(RoundedCornerShape(100.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .padding(horizontal = 8.dp, vertical = 6.dp)
         ) {
-            Text(
-                text = "VOL",
-                color = Color(0xFF555555),
-                fontFamily = FontFamily.Monospace,
-                fontSize = 12.sp
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Slider(
-                value = uiState.volume,
-                onValueChange = { viewModel.setVolume(it) },
-                modifier = Modifier.weight(1f),
-                colors = SliderDefaults.colors(
-                    thumbColor = Color.White,
-                    activeTrackColor = nothingRed,
-                    inactiveTrackColor = Color(0xFF333333)
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Transport controls
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Previous
-            IconButton(
-                onClick = { /* previous handled by PlayerManager */ },
-                modifier = Modifier.size(56.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.SkipPrevious,
-                    contentDescription = "Previous",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
+                UtilityChip(
+                    icon = if (uiState.currentStation?.isFavorite == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    label = "FAV",
+                    active = uiState.currentStation?.isFavorite == true,
+                    onClick = { viewModel.toggleFavorite() }
                 )
-            }
-
-            // Play/Pause - large center button
-            IconButton(
-                onClick = { viewModel.togglePlayPause() },
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(nothingRed)
-            ) {
-                Icon(
-                    imageVector = if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = if (uiState.isPlaying) "Pause" else "Play",
-                    tint = Color.White,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-
-            // Next
-            IconButton(
-                onClick = { /* next handled by PlayerManager */ },
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SkipNext,
-                    contentDescription = "Next",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
+                Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
+                UtilityChip(icon = Icons.Default.Timer, label = if (uiState.sleepRemainingMs > 0) "${uiState.sleepRemainingMs / 60000}M" else "SLEEP", active = uiState.sleepRemainingMs > 0, onClick = { showSleep = true })
+                Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
+                UtilityChip(icon = Icons.Default.Share, label = "SHARE", onClick = {
+                    uiState.currentStation?.let { s ->
+                        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "${s.name} - ${s.urlResolved.ifEmpty { s.url }}") }
+                        context.startActivity(Intent.createChooser(send, "Share"))
+                    }
+                })
+                Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
+                UtilityChip(icon = Icons.Filled.QueueMusic, label = "QUEUE${if (uiState.queue.size > 1) " ${uiState.queueIndex + 1}/${uiState.queue.size}" else ""}", onClick = { showQueue = true })
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.height(4.dp))
+    }
+
+    // ── Queue sheet — board style, pill rows
+    if (showQueue) {
+        ModalBottomSheet(onDismissRequest = { showQueue = false }, containerColor = Panel, contentColor = Color.White, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("TRAY", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.5.sp)
+                    Text("${uiState.queue.size} SPECIMENS", color = TextWhite35, fontFamily = Ndot57, fontSize = 10.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+                if (uiState.queue.isEmpty()) {
+                    Text("TRAY EMPTY — TUNE FROM BROWSE", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.heightIn(max = 360.dp)) {
+                        itemsIndexed(uiState.queue, key = { _, s -> s.stationUuid }) { idx, station ->
+                            val isCurrent = idx == uiState.queueIndex
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(100.dp))
+                                    .background(if (isCurrent) Ink else Color.Transparent)
+                                    .border(1.dp, if (isCurrent) BrightRed.copy(0.4f) else GridLine, RoundedCornerShape(100.dp))
+                                    .clickable { viewModel.seekInQueue(idx); showQueue = false }
+                                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(String.format("%02d", idx + 1), color = if (isCurrent) BrightRed else TextWhite35, fontFamily = Ndot57, fontSize = 10.sp, modifier = Modifier.width(28.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(station.name.uppercase(), color = if (isCurrent) Color.White else Color(0xFFCCCCCC), fontFamily = Ndot57, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text("${station.codec.uppercase().takeIf { it.isNotEmpty() } ?: "LIVE"} • ${station.bitrate.takeIf { it > 0 }?.let { "${it}K" } ?: ""}", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, maxLines = 1)
+                                }
+                                if (isCurrent) Box(Modifier.size(6.dp).clip(CircleShape).background(BrightRed))
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+            }
+        }
+    }
+
+    if (showSleep) {
+        ModalBottomSheet(onDismissRequest = { showSleep = false }, containerColor = Panel, contentColor = Color.White, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)) {
+            Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("SLEEP", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.5.sp)
+                Text("Scope dims and tray stops", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    listOf(5, 15, 30, 60).forEach { mins ->
+                        OutlinedButton(
+                            onClick = { viewModel.startSleepTimer(mins * 60_000L); showSleep = false },
+                            modifier = Modifier.weight(1f), shape = RoundedCornerShape(100.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GridLine)
+                        ) { Text("${mins}M", fontFamily = Ndot57, fontSize = 11.sp) }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { viewModel.cancelSleepTimer(); showSleep = false },
+                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(100.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BrightRed)
+                ) { Text("CANCEL", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+                Spacer(Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun UtilityChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, active: Boolean = false, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(100.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    ) {
+        Icon(icon, contentDescription = label, tint = if (active) BrightRed else TextWhite35, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.height(3.dp))
+        Text(label, color = if (active) BrightRed else TextWhite35, fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 0.8.sp, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
+    }
+}
+
+@Composable
+private fun OscilloTrace(isPlaying: Boolean, isBuffering: Boolean, modifier: Modifier = Modifier) {
+    val inf = rememberInfiniteTransition(label = "osc")
+    val phase by inf.animateFloat(0f, 6.28f, infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "phase")
+    val amp by inf.animateFloat(0.6f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "amp")
+    Canvas(modifier = modifier) {
+        if (!isPlaying || isBuffering) {
+            // flat line when idle
+            drawLine(color = Color(0xFF333333), start = Offset(0f, size.height / 2), end = Offset(size.width, size.height / 2), strokeWidth = 2f)
+            return@Canvas
+        }
+        val traceColor = Color(0xFFFF3344)
+        val path = androidx.compose.ui.graphics.Path()
+        val midY = size.height / 2
+        val a = 22f * amp
+        // oscilloscope sine with slight noise
+        for (x in 0..size.width.toInt() step 3) {
+            val xf = x.toFloat()
+            val y = midY + a * kotlin.math.sin(xf * 0.04f + phase).toFloat() + (kotlin.math.sin(xf * 0.09f + phase * 1.3f).toFloat() * 6f)
+            if (x == 0) path.moveTo(xf, y) else path.lineTo(xf, y)
+        }
+        drawPath(path, color = traceColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f))
+        // glow under
+        drawPath(path, color = traceColor.copy(alpha = 0.18f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 9f))
     }
 }
