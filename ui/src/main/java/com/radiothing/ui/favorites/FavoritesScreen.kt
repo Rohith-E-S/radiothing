@@ -4,18 +4,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radiothing.ui.common.EmptyState
+import com.radiothing.ui.common.EmptyStateType
 import com.radiothing.ui.components.StationListItem
+import com.radiothing.ui.theme.BrightRed
+import com.radiothing.ui.theme.GridLine
+import com.radiothing.ui.theme.Panel
+import com.radiothing.ui.theme.PureBlack
+import com.radiothing.ui.theme.TextWhite35
 
 @Composable
 fun FavoritesScreen(
@@ -27,72 +37,64 @@ fun FavoritesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(PureBlack)
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
 
-        // Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
-            Text(
-                text = "FAVORITES",
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
-                letterSpacing = 2.sp
-            )
-            if (uiState.favorites.isNotEmpty()) {
+            Column {
                 Text(
-                    text = "${uiState.favorites.size} SAVED",
-                    color = Color(0xFF555555),
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    text = "FAVORITES",
+                    color = Color.White,
+                    fontFamily = Ndot57,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                    letterSpacing = 2.5.sp
                 )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (uiState.favorites.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.height(3.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(5.dp).clip(RoundedCornerShape(100.dp)).background(BrightRed))
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "♡",
-                        color = Color(0xFF333333),
-                        fontSize = 48.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "NO FAVORITES YET",
-                        color = Color(0xFF555555),
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 14.sp,
+                        text = "YOUR COLLECTION  •  SAVED SIGNALS",
+                        color = TextWhite35,
+                        fontFamily = Ndot57,
+                        fontSize = 9.sp,
                         letterSpacing = 1.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "TAP ♡ ON ANY STATION TO SAVE",
-                        color = Color(0xFF333333),
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 11.sp
                     )
                 }
             }
+            if (uiState.favorites.isNotEmpty()) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "${uiState.favorites.size}",
+                        color = BrightRed,
+                        fontFamily = Ndot57,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp
+                    )
+                    Text("SAVED", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+        HorizontalDivider(color = GridLine, thickness = 1.dp)
+        Spacer(Modifier.height(12.dp))
+
+        if (uiState.favorites.isEmpty()) {
+            EmptyState(type = EmptyStateType.NO_FAVORITES, modifier = Modifier.fillMaxSize())
         } else {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                contentPadding = PaddingValues(bottom = 8.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 16.dp, top = 4.dp)
             ) {
-                items(uiState.favorites) { station ->
+                items(uiState.favorites, key = { it.stationUuid }) { station ->
                     StationListItem(
                         station = station,
                         isPlaying = false,

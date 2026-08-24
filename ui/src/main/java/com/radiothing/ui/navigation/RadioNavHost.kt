@@ -12,6 +12,8 @@ import com.radiothing.ui.browse.BrowseScreen
 import com.radiothing.ui.favorites.FavoritesScreen
 import com.radiothing.ui.history.HistoryScreen
 import com.radiothing.ui.nowplaying.NowPlayingScreen
+import com.radiothing.ui.playlists.PlaylistDetailScreen
+import com.radiothing.ui.playlists.PlaylistsScreen
 import com.radiothing.ui.settings.SettingsScreen
 
 @Composable
@@ -50,6 +52,24 @@ fun RadioNavHost(
         composable(Screen.History.route) {
             HistoryScreen(
                 viewModel = hiltViewModel(),
+                onStationClick = { navController.navigate(Screen.NowPlaying.route) }
+            )
+        }
+        composable(Screen.Playlists.route) {
+            PlaylistsScreen(
+                viewModel = hiltViewModel(),
+                onPlaylistClick = { id -> navController.navigate("playlist/$id") }
+            )
+        }
+        composable(
+            route = Screen.PlaylistDetail.ROUTE,
+            arguments = listOf(navArgument("playlistId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("playlistId") ?: 0L
+            PlaylistDetailScreen(
+                playlistId = id,
+                viewModel = hiltViewModel(),
+                onBackClick = { navController.popBackStack() },
                 onStationClick = { navController.navigate(Screen.NowPlaying.route) }
             )
         }

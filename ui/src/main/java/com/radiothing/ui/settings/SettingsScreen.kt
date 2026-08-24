@@ -14,40 +14,52 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radiothing.ui.theme.BrightRed
+import com.radiothing.ui.theme.GridLine
+import com.radiothing.ui.theme.Panel
+import com.radiothing.ui.theme.PureBlack
+import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.theme.TextWhite70
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val settings by viewModel.settings.collectAsState(initial = null)
-    val nothingRed = Color(0xFFFF2D2D)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(PureBlack)
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "SETTINGS",
             color = Color.White,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Ndot57,
             fontWeight = FontWeight.Bold,
-            fontSize = 28.sp,
-            letterSpacing = 2.sp
+            fontSize = 22.sp,
+            letterSpacing = 2.5.sp
         )
+        Spacer(Modifier.height(3.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(5.dp).clip(RoundedCornerShape(100.dp)).background(BrightRed))
+            Spacer(Modifier.width(6.dp))
+            Text("PREFERENCES  •  DEVICE", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = GridLine, thickness = 1.dp)
+        Spacer(Modifier.height(16.dp))
 
         settings?.let { appSettings ->
-            // Playback section
             SettingSectionHeader(title = "PLAYBACK")
-
             SettingsCard {
                 SettingSlider(
                     title = "CROSSFADE",
@@ -56,9 +68,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     suffix = "s",
                     onValueChange = { viewModel.setCrossfadeDuration(it.toInt()) }
                 )
-
-                HorizontalDivider(color = Color(0xFF222222))
-
+                HorizontalDivider(color = GridLine)
                 SettingSlider(
                     title = "BUFFER SIZE",
                     value = appSettings.bufferSize.toFloat(),
@@ -66,70 +76,63 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     suffix = "ms",
                     onValueChange = { viewModel.setBufferSize(it.toInt()) }
                 )
+                HorizontalDivider(color = GridLine)
+                SettingSwitch(
+                    title = "ASCII NOTIFICATION",
+                    subtitle = "Use block art in notification",
+                    checked = appSettings.useAsciiNotification,
+                    onCheckedChange = { viewModel.setUseAsciiNotification(it) }
+                )
             }
 
-
-
-            // About section
-            SettingSectionHeader(title = "ABOUT")
-
+            SettingSectionHeader(title = "SLEEP TIMER")
             SettingsCard {
-                Column(
+                Text(
+                    text = "Use the timer control in Now Playing (5 / 15 / 30 / 60 min). Playback fades and stops.",
+                    color = TextWhite70,
+                    fontFamily = Ndot57,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
                     modifier = Modifier.padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "VERSION",
-                            color = Color.Gray,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp
-                        )
-                        Text(
-                            text = "1.0.0",
-                            color = Color.White,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp
-                        )
+                )
+            }
+
+            SettingSectionHeader(title = "ABOUT")
+            SettingsCard {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("VERSION", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
+                        Text("1.0.0", color = Color.White, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "API",
-                            color = Color.Gray,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp
-                        )
-                        Text(
-                            text = "RADIO-BROWSER.INFO",
-                            color = Color.White,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp
-                        )
+                    Spacer(Modifier.height(10.dp))
+                    HorizontalDivider(color = GridLine)
+                    Spacer(Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("API", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
+                        Text("RADIO-BROWSER.INFO", color = Color.White, fontFamily = Ndot57, fontSize = 11.sp)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    HorizontalDivider(color = GridLine)
+                    Spacer(Modifier.height(10.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("BUILD", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
+                        Text("BLACK LAB • 01", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Footer
+            Spacer(modifier = Modifier.height(28.dp))
             Text(
-                text = "RADIO.THING",
-                color = Color(0xFF333333),
-                fontFamily = FontFamily.Monospace,
+                text = "RADIO.THING — OPEN  •  FREE  •  NO ADS",
+                color = TextWhite35,
+                fontFamily = Ndot57,
                 fontWeight = FontWeight.Bold,
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 textAlign = TextAlign.Center,
-                letterSpacing = 2.sp,
+                letterSpacing = 1.5.sp,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -138,12 +141,12 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 fun SettingSectionHeader(title: String) {
     Text(
         text = title,
-        color = Color(0xFFFF2D2D),
-        fontFamily = FontFamily.Monospace,
+        color = BrightRed,
+        fontFamily = Ndot57,
         fontWeight = FontWeight.Bold,
         fontSize = 11.sp,
         letterSpacing = 2.sp,
-        modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
+        modifier = Modifier.padding(bottom = 8.dp, start = 4.dp, top = 16.dp)
     )
 }
 
@@ -152,8 +155,13 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFF111111)),
+            .clip(RoundedCornerShape(16.dp))
+            .background(Panel)
+            .then(
+                androidx.compose.foundation.BorderStroke(1.dp, GridLine).let {
+                    Modifier
+                }
+            ),
         content = content
     )
 }
@@ -173,20 +181,9 @@ fun SettingSwitch(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 13.sp
-            )
+            Text(text = title, color = Color.White, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
             if (subtitle != null) {
-                Text(
-                    text = subtitle,
-                    color = Color(0xFF555555),
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 10.sp,
-                    modifier = Modifier.padding(top = 2.dp)
-                )
+                Text(text = subtitle, color = TextWhite35, fontFamily = Ndot57, fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
@@ -195,9 +192,11 @@ fun SettingSwitch(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFFFF2D2D),
-                uncheckedThumbColor = Color.Gray,
-                uncheckedTrackColor = Color(0xFF333333)
+                checkedTrackColor = BrightRed,
+                checkedBorderColor = BrightRed,
+                uncheckedThumbColor = Color(0xFF9A9A9E),
+                uncheckedTrackColor = GridLine,
+                uncheckedBorderColor = GridLine
             )
         )
     }
@@ -211,39 +210,22 @@ fun SettingSlider(
     suffix: String = "",
     onValueChange: (Float) -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = title,
-                color = Color.White,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 13.sp
-            )
-            Text(
-                text = "${value.toInt()}$suffix",
-                color = Color(0xFFFF2D2D),
-                fontFamily = FontFamily.Monospace,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = title, color = Color.White, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = "${value.toInt()}$suffix", color = BrightRed, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = range,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = 6.dp),
             colors = SliderDefaults.colors(
                 thumbColor = Color.White,
-                activeTrackColor = Color(0xFFFF2D2D),
-                inactiveTrackColor = Color(0xFF333333)
+                activeTrackColor = BrightRed,
+                inactiveTrackColor = GridLine,
+                activeTickColor = Color.Transparent,
+                inactiveTickColor = Color.Transparent
             )
         )
     }

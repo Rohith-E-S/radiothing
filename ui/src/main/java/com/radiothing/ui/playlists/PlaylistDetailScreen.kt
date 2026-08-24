@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,12 +37,13 @@ fun PlaylistDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(16.dp)
     ) {
         Text(
             text = "< BACK",
             color = Color.White,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Ndot57,
             modifier = Modifier
                 .clickable(onClick = onBackClick)
                 .padding(bottom = 24.dp)
@@ -53,7 +55,7 @@ fun PlaylistDetailScreen(
                 color = Color(0xFFFF2D2D),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = Ndot57,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
@@ -76,7 +78,7 @@ fun PlaylistDetailScreen(
                 text = "NO STATIONS AVAILABLE",
                 color = Color.Gray,
                 fontSize = 14.sp,
-                fontFamily = FontFamily.Monospace
+                fontFamily = Ndot57
             )
         }
     }
@@ -94,14 +96,14 @@ fun StationItem(station: RadioStation, onClick: () -> Unit) {
             Text(
                 text = station.name.uppercase(),
                 color = Color.White,
-                fontSize = 20.sp,
-                fontFamily = FontFamily.Monospace
+                fontSize = 16.sp,
+                fontFamily = Ndot57
             )
             Text(
-                text = "UUID: ${station.stationUuid}", 
+                text = "${station.bitrate}k • ${station.country}",
                 color = Color.Gray,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Monospace
+                fontSize = 11.sp,
+                fontFamily = Ndot57
             )
         }
     }
