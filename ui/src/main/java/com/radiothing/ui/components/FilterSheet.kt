@@ -1,6 +1,8 @@
 package com.radiothing.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,15 +36,27 @@ import com.radiothing.ui.theme.RadioShapes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterSheet(
-    onApply: (country: String?, bitrate: String?, codec: String?) -> Unit,
+    onApply: (Set<String>, Set<String>) -> Unit,
     onClear: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    initialBitrates: Set<String> = emptySet(),
+    initialCodecs: Set<String> = emptySet()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
-    var selectedCountry by remember { mutableStateOf<String?>(null) }
-    var selectedBitrate by remember { mutableStateOf<String?>("Any") }
-    var selectedCodec by remember { mutableStateOf<String?>("Any") }
+
+    var selectedBitrates by remember(initialBitrates) { mutableStateOf(initialBitrates) }
+    var selectedCodecs by remember(initialCodecs) { mutableStateOf(initialCodecs) }
+
+    fun toggleBitrate(v: String) {
+        selectedBitrates = if (v == "Any") emptySet()
+        else if (selectedBitrates.contains(v)) selectedBitrates - v
+        else selectedBitrates + v
+    }
+    fun toggleCodec(v: String) {
+        selectedCodecs = if (v == "Any") emptySet()
+        else if (selectedCodecs.contains(v)) selectedCodecs - v
+        else selectedCodecs + v
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -54,7 +71,7 @@ fun FilterSheet(
         ) {
             Text(
                 text = "FILTERS",
-                fontFamily = FontFamily.Monospace,
+                fontFamily = Ndot57,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 color = RadioColors.TextPrimary,
@@ -64,34 +81,65 @@ fun FilterSheet(
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "BITRATE",
-                fontFamily = FontFamily.Monospace,
+                text = "BITRATE — multi-select",
+                fontFamily = Ndot57,
                 fontSize = 14.sp,
                 color = RadioColors.TextSecondary
             )
             Spacer(modifier = Modifier.height(8.dp))
-            FilterChips(
-                items = listOf("Any", "64", "128", "192", "256", "320"),
-                selectedItem = selectedBitrate,
-                onItemClick = { selectedBitrate = it },
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Bitrate chips — multiselect
+            androidx.compose.foundation.lazy.LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                val bitrateItems = listOf("Any", "64", "128", "192", "256", "320")
+                items(bitrateItems.size) { idx ->
+                    val item = bitrateItems[idx]
+                    val isSelected = if (item == "Any") selectedBitrates.isEmpty() else selectedBitrates.contains(item)
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .clip(RadioShapes.Chip)
+                            .background(if (isSelected) RadioColors.Accent else androidx.compose.ui.graphics.Color.Transparent)
+                            .border(1.dp, if (isSelected) RadioColors.Accent else RadioColors.Border, RadioShapes.Chip)
+                            .clickable { toggleBitrate(item) }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(item.uppercase(), color = if (isSelected) RadioColors.TextPrimary else RadioColors.TextSecondary, fontFamily = Ndot57, fontSize = 12.sp, letterSpacing = 1.sp)
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
             Text(
-                text = "CODEC",
-                fontFamily = FontFamily.Monospace,
+                text = "CODEC — multi-select",
+                fontFamily = Ndot57,
                 fontSize = 14.sp,
                 color = RadioColors.TextSecondary
             )
             Spacer(modifier = Modifier.height(8.dp))
-            FilterChips(
-                items = listOf("Any", "MP3", "AAC", "OGG", "FLAC"),
-                selectedItem = selectedCodec,
-                onItemClick = { selectedCodec = it },
-                modifier = Modifier.fillMaxWidth()
-            )
+            androidx.compose.foundation.lazy.LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                val codecItems = listOf("Any", "MP3", "AAC", "OGG", "FLAC")
+                items(codecItems.size) { idx ->
+                    val item = codecItems[idx]
+                    val isSelected = if (item == "Any") selectedCodecs.isEmpty() else selectedCodecs.contains(item)
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .clip(RadioShapes.Chip)
+                            .background(if (isSelected) RadioColors.Accent else androidx.compose.ui.graphics.Color.Transparent)
+                            .border(1.dp, if (isSelected) RadioColors.Accent else RadioColors.Border, RadioShapes.Chip)
+                            .clickable { toggleCodec(item) }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(item.uppercase(), color = if (isSelected) RadioColors.TextPrimary else RadioColors.TextSecondary, fontFamily = Ndot57, fontSize = 12.sp, letterSpacing = 1.sp)
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -101,9 +149,8 @@ fun FilterSheet(
             ) {
                 OutlinedButton(
                     onClick = {
-                        selectedCountry = null
-                        selectedBitrate = "Any"
-                        selectedCodec = "Any"
+                        selectedBitrates = emptySet()
+                        selectedCodecs = emptySet()
                         onClear()
                         onDismiss()
                     },
@@ -113,12 +160,12 @@ fun FilterSheet(
                         contentColor = RadioColors.TextPrimary
                     )
                 ) {
-                    Text("CLEAR", fontFamily = FontFamily.Monospace)
+                    Text("CLEAR", fontFamily = Ndot57)
                 }
                 
                 Button(
                     onClick = {
-                        onApply(selectedCountry, selectedBitrate, selectedCodec)
+                        onApply(selectedBitrates, selectedCodecs)
                         onDismiss()
                     },
                     modifier = Modifier.weight(1f),
@@ -128,7 +175,7 @@ fun FilterSheet(
                         contentColor = RadioColors.TextPrimary
                     )
                 ) {
-                    Text("APPLY", fontFamily = FontFamily.Monospace)
+                    Text("APPLY", fontFamily = Ndot57)
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

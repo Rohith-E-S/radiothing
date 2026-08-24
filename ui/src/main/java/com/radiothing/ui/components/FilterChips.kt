@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.ui.theme.RadioColors
@@ -50,7 +51,7 @@ fun FilterChips(
                 Text(
                     text = item.uppercase(),
                     color = if (isSelected) RadioColors.TextPrimary else RadioColors.TextSecondary,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = Ndot57,
                     fontSize = 12.sp,
                     letterSpacing = 1.sp
                 )
