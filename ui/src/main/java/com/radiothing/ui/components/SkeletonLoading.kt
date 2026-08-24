@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.ui.theme.RadioColors
@@ -57,22 +58,21 @@ private fun SkeletonItem() {
             .fillMaxWidth()
             .background(RadioColors.Surface, RadioShapes.Card)
             .border(1.dp, RadioColors.Border, RadioShapes.Card)
-            .padding(12.dp)
+            .padding(14.dp)
             .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Favicon placeholder
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .background(RadioColors.Border)
+                .size(52.dp)
+                .background(RadioColors.Border, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
         ) {
             Text(
-                "▓",
+                "∿",
                 modifier = Modifier.align(Alignment.Center),
                 color = RadioColors.TextTertiary,
-                fontFamily = FontFamily.Monospace,
-                fontSize = 20.sp
+                fontFamily = Ndot57,
+                fontSize = 18.sp
             )
         }
         
@@ -83,7 +83,7 @@ private fun SkeletonItem() {
             Text(
                 text = "████████████",
                 color = RadioColors.TextSecondary,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = Ndot57,
                 fontSize = 16.sp
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -91,7 +91,7 @@ private fun SkeletonItem() {
             Text(
                 text = "▒▒▒▒ ░░░░░░░",
                 color = RadioColors.TextTertiary,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = Ndot57,
                 fontSize = 12.sp
             )
         }

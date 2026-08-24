@@ -1,15 +1,26 @@
 package com.radiothing.ui.common
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radiothing.ui.theme.BrightRed
+import com.radiothing.ui.theme.GridLine
+import com.radiothing.ui.theme.Panel
+import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.theme.TextWhite70
 
 enum class EmptyStateType {
     NO_RESULTS, NO_FAVORITES, NO_PLAYLISTS, NO_HISTORY
@@ -20,84 +31,85 @@ fun EmptyState(
     type: EmptyStateType,
     modifier: Modifier = Modifier
 ) {
-    val (asciiArt, title, subtitle) = when (type) {
+    val (title, subtitle, hint) = when (type) {
         EmptyStateType.NO_RESULTS -> Triple(
-            """
-               .-.
-              |   |
-             _|_|_|_
-            |       |
-            | O   O |
-            |_______|
-            """.trimIndent(),
-            "NO STATIONS FOUND",
-            "Try a different search term"
+            "NO SIGNAL",
+            "No stations match your query",
+            "TRY ANOTHER FREQUENCY"
         )
         EmptyStateType.NO_FAVORITES -> Triple(
-            """
-              .-"-. 
-             /     \
-             \     /
-              `._.`
-            """.trimIndent(),
             "NO FAVORITES YET",
-            "Browse stations to add favorites"
+            "Save stations you love",
+            "BROWSE → TAP HEART"
         )
         EmptyStateType.NO_PLAYLISTS -> Triple(
-            """
-             ______
-            |      |
-            |      |
-            |______|
-            """.trimIndent(),
             "NO PLAYLISTS YET",
-            "Create a playlist to organize stations"
+            "Group stations into collections",
+            "CREATE YOUR FIRST LIST"
         )
         EmptyStateType.NO_HISTORY -> Triple(
-            """
-              .--.
-             |  _ |
-             | | \|
-              `--'
-            """.trimIndent(),
-            "NO HISTORY YET",
-            "Start listening to see history"
+            "LOG EMPTY",
+            "Your listening history lives here",
+            "HIT PLAY TO BEGIN"
         )
     }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = asciiArt,
-            color = Color(0xFF666666),
-            fontFamily = FontFamily.Monospace,
-            fontSize = 20.sp,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = title,
-            color = Color(0xFF666666),
-            fontFamily = FontFamily.Monospace,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = subtitle,
-            color = Color(0xFF666666),
-            fontFamily = FontFamily.Monospace,
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center
-        )
+        // Instrument plate
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(16.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(16.dp))
+                .padding(horizontal = 28.dp, vertical = 24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xFF0D0D0F))
+                        .border(1.dp, GridLine, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("∿", color = BrightRed, fontFamily = Ndot57, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontFamily = Ndot57,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    letterSpacing = 1.5.sp,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = subtitle,
+                    color = TextWhite70,
+                    fontFamily = Ndot57,
+                    fontSize = 11.sp,
+                    textAlign = TextAlign.Center,
+                    lineHeight = 15.sp
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = hint,
+                    color = TextWhite35,
+                    fontFamily = Ndot57,
+                    fontSize = 9.sp,
+                    letterSpacing = 1.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }

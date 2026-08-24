@@ -7,10 +7,12 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -19,15 +21,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.domain.model.PlayerState
+import com.radiothing.ui.theme.BrightRed
+import com.radiothing.ui.theme.GridLine
+import com.radiothing.ui.theme.Ink
+import com.radiothing.ui.theme.Panel
+import com.radiothing.ui.theme.TextWhite70
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -38,8 +46,6 @@ fun MiniPlayer(
     onNext: () -> Unit,
     onPrevious: () -> Unit
 ) {
-    val nothingRed = Color(0xFFFF2D2D)
-
     AnimatedVisibility(
         visible = playerState.currentStation != null,
         enter = slideInVertically(initialOffsetY = { it }),
@@ -48,103 +54,106 @@ fun MiniPlayer(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
-                .background(Color(0xFF0A0A0A))
-                .drawBehind {
-                    // Top accent line
-                    drawLine(
-                        color = if (playerState.isPlaying) nothingRed else Color(0xFF333333),
-                        start = Offset(0f, 0f),
-                        end = Offset(size.width, 0f),
-                        strokeWidth = if (playerState.isPlaying) 2.dp.toPx() else 1.dp.toPx()
-                    )
-                }
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures { change, dragAmount ->
-                        change.consume()
-                        if (dragAmount < -20) {
-                            onExpandClick()
-                        }
-                    }
-                }
-                .clickable(onClick = onExpandClick)
-                .padding(horizontal = 16.dp),
-            contentAlignment = Alignment.CenterStart
+                .background(Ink)
+                .semantics { contentDescription = "Mini player, tap to expand, swipe up" }
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(100.dp))
+                    .background(Panel)
+                    .border(1.dp, if (playerState.isPlaying) BrightRed.copy(alpha = 0.45f) else GridLine, RoundedCornerShape(100.dp))
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures { change, dragAmount ->
+                            change.consume()
+                            if (dragAmount < -20) onExpandClick()
+                        }
+                    }
+                    .clickable(onClick = onExpandClick)
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Playing indicator dot
+                // Lab indicator strip
                 if (playerState.isPlaying) {
                     val infiniteTransition = rememberInfiniteTransition(label = "mini")
                     val alpha by infiniteTransition.animateFloat(
-                        initialValue = 0.3f,
+                        initialValue = 0.35f,
                         targetValue = 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(700),
-                            repeatMode = RepeatMode.Reverse
-                        ),
+                        animationSpec = infiniteRepeatable(tween(700), RepeatMode.Reverse),
                         label = "miniPulse"
                     )
                     Box(
                         modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(nothingRed.copy(alpha = alpha))
+                            .width(3.dp)
+                            .height(32.dp)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(BrightRed.copy(alpha = alpha))
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(Modifier.width(12.dp))
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .width(3.dp)
+                            .height(32.dp)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(GridLine)
+                    )
+                    Spacer(Modifier.width(12.dp))
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = playerState.currentStation?.name ?: "",
+                        text = playerState.currentStation?.name?.uppercase() ?: "",
                         color = Color.White,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 13.sp,
+                        fontFamily = Ndot57,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
                         maxLines = 1,
+                        letterSpacing = 0.4.sp,
                         modifier = Modifier.basicMarquee()
                     )
+                    Spacer(Modifier.height(2.dp))
                     if (playerState.isBuffering) {
                         val infiniteTransition = rememberInfiniteTransition(label = "buf")
-                        val dotCount by infiniteTransition.animateValue(
-                            initialValue = 0,
-                            targetValue = 3,
-                            typeConverter = Int.VectorConverter,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(1000, easing = LinearEasing),
-                                repeatMode = RepeatMode.Restart
-                            ),
-                            label = "buffering"
-                        )
+                        val dotCount by infiniteTransition.animateValue(0, 3, Int.VectorConverter, infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "buffering")
                         Text(
-                            text = "BUFFERING${".".repeat(dotCount)}",
-                            color = nothingRed,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 10.sp
+                            text = "TUNING${".".repeat(dotCount)}",
+                            color = BrightRed,
+                            fontFamily = Ndot57,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
                         )
                     } else {
+                        val queueInfo = if (playerState.queue.size > 1) " • ${playerState.queueIndex + 1}/${playerState.queue.size}" else ""
+                        val meta = "${playerState.currentStation?.bitrate?.takeIf { it > 0 }?.let { "${it}K" } ?: "LIVE"}${playerState.currentStation?.codec?.takeIf { it.isNotEmpty() }?.let { " • ${it.uppercase()}" } ?: ""}$queueInfo"
                         Text(
-                            text = "${playerState.currentStation?.bitrate ?: "---"}KBPS",
-                            color = Color(0xFF555555),
-                            fontFamily = FontFamily.Monospace,
+                            text = meta,
+                            color = TextWhite70,
+                            fontFamily = Ndot57,
                             fontSize = 10.sp,
-                            maxLines = 1
+                            maxLines = 1,
+                            letterSpacing = 0.4.sp
                         )
                     }
                 }
 
-                // Play/Pause with proper icon
-                IconButton(
-                    onClick = onPlayPauseClick,
-                    modifier = Modifier.size(40.dp)
+                Spacer(Modifier.width(10.dp))
+                // Play/Pause — enclosure button
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(CircleShape)
+                        .background(BrightRed)
+                        .clickable(onClick = onPlayPauseClick),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = if (playerState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = if (playerState.isPlaying) "Pause" else "Play",
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }

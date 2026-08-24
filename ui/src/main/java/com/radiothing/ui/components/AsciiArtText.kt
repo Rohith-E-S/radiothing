@@ -4,6 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.radiothing.ui.theme.RadioColors
@@ -40,7 +41,7 @@ fun AsciiArtText(
        Text(
            text = text.uppercase(),
            modifier = modifier,
-           fontFamily = FontFamily.Monospace,
+           fontFamily = Ndot57,
            color = RadioColors.TextPrimary,
            fontSize = 24.sp,
            fontWeight = FontWeight.Black
@@ -56,7 +57,7 @@ fun AsciiArtText(
         Text(
             text = rows.joinToString("\n"),
             modifier = modifier,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Ndot57,
             color = RadioColors.TextPrimary,
             fontSize = 10.sp,
             lineHeight = 10.sp

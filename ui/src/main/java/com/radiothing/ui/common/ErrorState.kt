@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,7 +48,7 @@ fun ErrorState(
         Text(
             text = "█▓▒░ $glitchText ░▒▓█",
             color = Color(0xFFFF2D2D),
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Ndot57,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
             textAlign = TextAlign.Center
@@ -58,7 +59,7 @@ fun ErrorState(
         Text(
             text = message,
             color = Color(0xFFFF2D2D),
-            fontFamily = FontFamily.Monospace,
+            fontFamily = Ndot57,
             fontSize = 14.sp,
             textAlign = TextAlign.Center
         )
@@ -74,7 +75,7 @@ fun ErrorState(
             Text(
                 text = "[ RETRY ]",
                 color = Color(0xFFFF2D2D),
-                fontFamily = FontFamily.Monospace,
+                fontFamily = Ndot57,
                 fontWeight = FontWeight.Bold
             )
         }

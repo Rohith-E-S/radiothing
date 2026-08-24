@@ -13,10 +13,20 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.Ndot57
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.radiothing.ui.theme.BrightRed
+import com.radiothing.ui.theme.GridLine
+import com.radiothing.ui.theme.Hairline
+import com.radiothing.ui.theme.Panel
+import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.theme.TextWhite70
 
 @Composable
 fun NothingTextField(
@@ -29,31 +39,44 @@ fun NothingTextField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(text = placeholder, fontFamily = FontFamily.Monospace, color = Color.Gray) },
+        placeholder = { Text(text = placeholder, fontFamily = Ndot57, color = TextWhite35, fontSize = 13.sp, letterSpacing = 0.8.sp) },
         keyboardOptions = KeyboardOptions(imeAction = if (onSearch != null) ImeAction.Search else ImeAction.Default),
         keyboardActions = KeyboardActions(onSearch = { onSearch?.invoke() }),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color(0xFF1A1A1A),
-            unfocusedContainerColor = Color(0xFF1A1A1A),
+            focusedContainerColor = Panel,
+            unfocusedContainerColor = Panel,
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
-            cursorColor = Color(0xFFFF2D2D),
-            focusedIndicatorColor = Color(0xFFFF2D2D),
-            unfocusedIndicatorColor = Color(0xFF333333)
+            cursorColor = BrightRed,
+            focusedIndicatorColor = BrightRed,
+            unfocusedIndicatorColor = GridLine,
+            disabledIndicatorColor = GridLine
         ),
         trailingIcon = {
             if (onSearch != null) {
-                Text(
-                    text = "GO",
-                    fontFamily = FontFamily.Monospace,
-                    color = Color(0xFFFF2D2D),
+                Box(
                     modifier = Modifier
+                        .padding(end = 6.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(BrightRed)
                         .clickable { onSearch.invoke() }
-                        .padding(8.dp)
-                )
+                        .padding(horizontal = 16.dp, vertical = 9.dp)
+                ) {
+                    Text(
+                        text = "GO",
+                        fontFamily = Ndot57,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        letterSpacing = 1.sp
+                    )
+                }
             }
         },
-        modifier = modifier.border(1.dp, Color(0xFF333333))
+        shape = RoundedCornerShape(100.dp),
+        modifier = modifier
+            .clip(RoundedCornerShape(100.dp))
+            .border(1.dp, Hairline, RoundedCornerShape(100.dp))
     )
 }
 
@@ -65,15 +88,19 @@ fun NothingChip(
 ) {
     Box(
         modifier = Modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (isSelected) BrightRed else Panel, RoundedCornerShape(10.dp))
+            .border(1.dp, if (isSelected) BrightRed else GridLine, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
-            .background(if (isSelected) Color(0xFFFF2D2D) else Color.Transparent, RoundedCornerShape(2.dp))
-            .border(1.dp, if (isSelected) Color(0xFFFF2D2D) else Color(0xFF333333), RoundedCornerShape(2.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
         Text(
             text = text,
-            color = if (isSelected) Color.White else Color.Gray,
-            fontFamily = FontFamily.Monospace
+            color = if (isSelected) Color.White else TextWhite70,
+            fontFamily = Ndot57,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.6.sp
         )
     }
 }
