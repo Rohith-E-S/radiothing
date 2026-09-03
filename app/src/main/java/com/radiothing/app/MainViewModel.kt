@@ -7,10 +7,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val playerManager: PlayerManager
+    _playerManager: PlayerManager
 ) : ViewModel() {
 
-    val playerState = playerManager.playerState
+    val playerState = _playerManager.playerState
+    val playerManager = _playerManager
 
     fun playPause() {
         val state = playerState.value

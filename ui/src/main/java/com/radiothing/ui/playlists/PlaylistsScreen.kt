@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,8 +38,10 @@ fun PlaylistsScreen(
     onPlaylistClick: (Long) -> Unit
 ) {
     val playlists by viewModel.playlists.collectAsState()
+    val counts by viewModel.playlistCounts.collectAsState()
     var showCreate by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
+    var deleteTarget by remember { mutableStateOf<Playlist?>(null) }
 
     Column(
         modifier = Modifier
@@ -78,17 +82,18 @@ fun PlaylistsScreen(
         Spacer(Modifier.height(12.dp))
 
         if (playlists.isEmpty()) {
-            EmptyState(type = EmptyStateType.NO_PLAYLISTS, modifier = Modifier.fillMaxSize())
+            EmptyState(type = EmptyStateType.NO_PLAYLISTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 16.dp, top = 4.dp)
+                contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
             ) {
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistItem(
                         playlist = playlist,
-                        count = 0,
-                        onClick = { onPlaylistClick(playlist.id) }
+                        count = counts[playlist.id] ?: 0,
+                        onClick = { onPlaylistClick(playlist.id) },
+                        onDelete = { deleteTarget = playlist }
                     )
                 }
             }
@@ -129,11 +134,31 @@ fun PlaylistsScreen(
                 shape = RoundedCornerShape(16.dp)
             )
         }
+        // Delete confirmation — destructive, so confirm before dropping the tray
+        deleteTarget?.let { playlist ->
+            AlertDialog(
+                onDismissRequest = { deleteTarget = null },
+                title = { Text("DELETE TRAY?", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
+                text = { Text("\"${playlist.name.uppercase()}\" and its ${counts[playlist.id] ?: 0} specimens will be removed. Cannot be undone.", fontFamily = Ndot57, fontSize = 12.sp, color = TextWhite35) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deletePlaylist(playlist.id)
+                            deleteTarget = null
+                        }
+                    ) { Text("DELETE", fontFamily = Ndot57, fontWeight = FontWeight.Bold, color = BrightRed) }
+                },
+                dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("CANCEL", fontFamily = Ndot57) } },
+                containerColor = Panel,
+                titleContentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            )
+        }
     }
 }
 
 @Composable
-fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit) {
+fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDelete: () -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,18 +200,36 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit) {
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "COLLECTION  •  ID ${playlist.id}",
+                text = "$count SPECIMENS",
                 color = TextWhite35,
                 fontSize = 10.sp,
                 fontFamily = Ndot57,
                 letterSpacing = 0.6.sp
             )
         }
-        Text(
-            text = "›",
-            color = TextWhite35,
-            fontSize = 18.sp,
-            fontFamily = Ndot57
-        )
+        if (count > 0) {
+            Text(
+                text = "›",
+                color = TextWhite35,
+                fontSize = 18.sp,
+                fontFamily = Ndot57
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        // Delete — trailing trash, 40dp touch
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(RoundedCornerShape(100.dp))
+                .clickable(onClick = onDelete),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Outlined.Delete,
+                contentDescription = "Delete playlist",
+                tint = TextWhite35,
+                modifier = Modifier.size(16.dp)
+            )
+        }
     }
 }

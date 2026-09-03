@@ -25,4 +25,12 @@ class SettingsViewModel @Inject constructor(
     fun setUseAsciiNotification(useAscii: Boolean) {
         viewModelScope.launch { settingsRepository.updateUseAsciiNotification(useAscii) }
     }
+
+    fun setEnableCache(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateEnableCache(enabled) }
+    }
+
+    fun setEnablePreWarm(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.updateEnablePreWarm(enabled) }
+    }
 }

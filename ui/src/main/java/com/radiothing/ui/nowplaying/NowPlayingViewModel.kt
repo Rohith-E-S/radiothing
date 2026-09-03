@@ -3,8 +3,10 @@ package com.radiothing.ui.nowplaying
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.radiothing.domain.model.PlayerState
+import com.radiothing.domain.model.Playlist
 import com.radiothing.domain.model.RadioStation
 import com.radiothing.domain.repository.FavoriteRepository
+import com.radiothing.domain.repository.PlaylistRepository
 import com.radiothing.domain.usecase.ToggleFavoriteUseCase
 import com.radiothing.player.PlayerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,12 +29,19 @@ data class NowPlayingUiState(
 class NowPlayingViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val playlistRepository: PlaylistRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NowPlayingUiState())
 
     val audioSessionId: StateFlow<Int> = playerManager.audioSessionId
+
+    val playlists: StateFlow<List<Playlist>> = playlistRepository.getPlaylists()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val playlistCounts: StateFlow<Map<Long, Int>> = playlistRepository.getPlaylistStationCounts()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val uiState: StateFlow<NowPlayingUiState> = combine(
         _uiState,
@@ -75,6 +84,21 @@ class NowPlayingViewModel @Inject constructor(
     fun toggleFavorite() {
         val station = uiState.value.currentStation ?: return
         viewModelScope.launch { toggleFavoriteUseCase(station) }
+    }
+
+    // --- Add to playlist ---
+
+    fun addStationToPlaylist(playlistId: Long) {
+        val station = uiState.value.currentStation ?: return
+        viewModelScope.launch { playlistRepository.addStationToPlaylist(playlistId, station) }
+    }
+
+    fun createPlaylistAndAddStation(name: String) {
+        val station = uiState.value.currentStation ?: return
+        viewModelScope.launch {
+            val id = playlistRepository.createPlaylist(name)
+            playlistRepository.addStationToPlaylist(id, station)
+        }
     }
 
     fun startSleepTimer(durationMs: Long) = playerManager.startSleepTimer(durationMs)

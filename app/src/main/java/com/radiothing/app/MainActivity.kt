@@ -21,16 +21,22 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -43,20 +49,19 @@ import com.radiothing.ui.components.MiniPlayer
 import com.radiothing.ui.navigation.BottomNavBar
 import com.radiothing.ui.navigation.RadioNavHost
 import com.radiothing.ui.navigation.Screen
+import com.radiothing.ui.navigation.TOP_LEVEL_TABS
+import com.radiothing.ui.navigation.TabPager
 import com.radiothing.ui.theme.RadioThingTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalFoundationApi::class)
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
     private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        // Handle permission result if needed
-    }
-    private val requestAudioPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { _ -> }
 
@@ -67,6 +72,17 @@ class MainActivity : ComponentActivity() {
         )
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Force high refresh rate when available — trade battery for butter (120Hz)
+        try {
+            window.attributes = window.attributes.apply {
+                preferredRefreshRate = 120f
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.decorView.post {
+                    try { window.decorView.requestLayout() } catch (_: Exception) {}
+                }
+            }
+        } catch (_: Exception) {}
 
         setContent {
             RadioThingTheme {
@@ -83,16 +99,13 @@ class MainActivity : ComponentActivity() {
                                 Manifest.permission.POST_NOTIFICATIONS
                             ) != PackageManager.PERMISSION_GRANTED
                         ) {
-                            if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                                // Will show rationale via snackbar on deny; request directly for now
-                            }
                             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                     }
-                    // Visualizer needs RECORD_AUDIO for real stream waveform — request once, fallback is synthetic
-                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                        requestAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                    }
+                    // NOTE: RECORD_AUDIO is deliberately NOT requested at cold start.
+                    // It's only needed for the Now Playing visualizer and is requested
+                    // contextually from StreamVisualizer on first open, with a graceful
+                    // fallback to the simulated waveform when denied.
                 }
 
                 LaunchedEffect(playerState.error) {
@@ -102,52 +115,95 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val isNowPlayingScreen = currentRoute == Screen.NowPlaying.route
-                val showBottomNav = !isNowPlayingScreen
-                val showMiniPlayer = !isNowPlayingScreen && playerState.currentStation != null
+                val isPlaylistDetail = currentRoute?.startsWith("playlist/") == true
+                val showOverlay = isNowPlayingScreen || isPlaylistDetail
+                // Miniplayer only when actively playing or tuning (buffering) — not when paused/stopped
+                val showMiniPlayer = !showOverlay && playerState.currentStation != null &&
+                    (playerState.isPlaying || playerState.isBuffering)
+
+                val pagerState = rememberPagerState(initialPage = 0) { TOP_LEVEL_TABS.size }
+                val scope = rememberCoroutineScope()
+
+                // Stable lambdas so the pager's content slot doesn't recompose on every frame
+                val onStationClick = remember(navController) {
+                    { _: String -> navController.navigate(Screen.NowPlaying.route) }
+                }
+                val onPlaylistClick = remember(navController) {
+                    { id: Long -> navController.navigate("playlist/$id") }
+                }
+
+                // Selected tab index — only changes when the user lands on a new tab,
+                // not on every swipe frame. This keeps DotMatrixIcon / Text from
+                // recomposing during the swipe gesture.
+                val selectedTabIndex by remember(pagerState, currentRoute) {
+                    androidx.compose.runtime.derivedStateOf {
+                        val idx = TOP_LEVEL_TABS.indexOfFirst { it.route == currentRoute }
+                        if (idx >= 0) idx else pagerState.currentPage
+                    }
+                }
 
                 Scaffold(
-                    // edge-to-edge: don't add systemBars to innerPadding — each screen handles its own status inset
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     snackbarHost = { SnackbarHost(snackbarHostState) },
-                    bottomBar = {
-                        if (showBottomNav) {
-                            BottomNavBar(
-                                currentRoute = currentRoute,
-                                onNavigate = { screen ->
-                                    navController.navigate(screen.route) {
-                                        launchSingleTop = true
-                                        restoreState = true
-                                        popUpTo(navController.graph.startDestinationId) {
-                                            saveState = true
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    },
                     containerColor = com.radiothing.ui.theme.PureBlack
                 ) { innerPadding ->
                     Box(modifier = Modifier.fillMaxSize()) {
-                        RadioNavHost(
-                            navController = navController,
+                        // Floating dock: TabPager renders full-screen behind the dock so content
+                        // shows through the translucent pills. Lists provide their own
+                        // bottom contentPadding (≈ dock height) so the last item is not
+                        // obscured but still scrolls behind the glass.
+                        TabPager(
+                            pagerState = pagerState,
+                            playerManager = viewModel.playerManager,
+                            onStationClick = onStationClick,
+                            onPlaylistClick = onPlaylistClick,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
-                                .padding(bottom = if (showMiniPlayer) 72.dp else 0.dp)
                         )
 
-                        if (showMiniPlayer && playerState.currentStation != null) {
-                            Box(
+                        // NavHost must ALWAYS be composed so the NavController's graph
+                        // is set from the first frame — navigate() before any NavHost
+                        // composition (empty graph) throws and crashes the app.
+                        // The transparent overlay_root start destination renders
+                        // nothing, so the tab pager shows through and receives input.
+                        RadioNavHost(
+                            navController = navController,
+                            playerManager = viewModel.playerManager,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        )
+
+                        // Bottom dock — floating pills that overlay the content. Both are
+                        // translucent so the list scrolls underneath.
+                        if (!showOverlay) {
+                            Column(
                                 modifier = Modifier
                                     .align(Alignment.BottomCenter)
-                                    .padding(bottom = innerPadding.calculateBottomPadding())
+                                    .fillMaxWidth()
                             ) {
-                                MiniPlayer(
-                                    playerState = playerState,
-                                    onPlayPauseClick = { viewModel.playPause() },
-                                    onNext = { viewModel.next() },
-                                    onPrevious = { viewModel.previous() },
-                                    onExpandClick = { navController.navigate(Screen.NowPlaying.route) }
+                                if (showMiniPlayer) {
+                                    MiniPlayer(
+                                        playerState = playerState,
+                                        onPlayPauseClick = { viewModel.playPause() },
+                                        onNext = { viewModel.next() },
+                                        onPrevious = { viewModel.previous() },
+                                        onExpandClick = { navController.navigate(Screen.NowPlaying.route) },
+                                        modifier = Modifier
+                                            .padding(horizontal = 16.dp)
+                                            .padding(bottom = 8.dp)
+                                    )
+                                }
+                                BottomNavBar(
+                                    selectedIndex = selectedTabIndex,
+                                    pagerState = pagerState,
+                                    onNavigate = { screen ->
+                                        val idx = TOP_LEVEL_TABS.indexOf(screen)
+                                        if (idx >= 0) {
+                                            scope.launch { pagerState.animateScrollToPage(idx) }
+                                        }
+                                    }
                                 )
                             }
                         }

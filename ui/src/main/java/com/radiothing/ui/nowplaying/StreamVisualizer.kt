@@ -68,26 +68,35 @@ fun StreamDotEqualizer(
                         // f = FFT: interleaved real/imag
                         val n = f.size / 2
                         val mags = FloatArray(barCount)
+                        // Log-spaced bands (like real EQs): bar 0 covers a NARROW low band instead of
+                        // swallowing the whole bass region — this is what keeps it from pinning full
+                        val minBin = 2 // skip DC + leakage
+                        val maxBin = n - 1
                         for (bar in 0 until barCount) {
-                            val start = (bar * n / barCount)
-                            val end = ((bar + 1) * n / barCount).coerceAtMost(n - 1)
-                            var sum = 0f
+                            val lo = minBin + ((maxBin - minBin).toDouble() * (bar.toDouble() / barCount).pow(1.8)).toInt()
+                            val hi = minBin + ((maxBin - minBin).toDouble() * ((bar + 1).toDouble() / barCount).pow(1.8)).toInt()
+                            val end = hi.coerceAtMost(maxBin)
+                            var peak = 0f
                             var c = 0
-                            for (i in start until end) {
+                            var i = lo
+                            while (i < end) {
                                 val re = f[i * 2].toInt()
                                 val im = f[i * 2 + 1].toInt()
                                 val mag = kotlin.math.hypot(re.toDouble(), im.toDouble()).toFloat()
-                                sum += mag
+                                if (mag > peak) peak = mag
                                 c++
+                                i++
                             }
-                            mags[bar] = if (c > 0) sum / c else 0f
+                            mags[bar] = if (c > 0) peak else 0f
                         }
-                        // normalize to 0..1 (log-ish)
-                        val max = mags.maxOrNull() ?: 1f
+                        // Fixed-reference normalization (NOT per-frame max — max-normalization
+                        // is what pinned bar 0: bass always won, everything else scaled to it).
+                        // 96f ≈ loud bin magnitude for Visualizer FFT; tilt counters bass dominance.
                         val normalized = FloatArray(barCount) { idx ->
-                            val raw = if (max > 0f) mags[idx] / max else 0f
-                            val v2 = raw.toDouble().pow(0.65).toFloat()
-                            (v2 * 0.85f + 0.12f).coerceIn(0f, 1f)
+                            val tilt = 0.55 + 0.45 * (idx.toDouble() / (barCount - 1)) // bar0 ×0.55 → last ×1.0
+                            val raw = (mags[idx] / 96f) * tilt
+                            val v2 = raw.coerceIn(0.0, 1.0).pow(0.8)
+                            (0.06 + v2 * 0.9).toFloat().coerceIn(0f, 1f)
                         }
                         fftLevels = normalized
                     }

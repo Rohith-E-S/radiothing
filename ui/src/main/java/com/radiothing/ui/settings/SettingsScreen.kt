@@ -1,6 +1,7 @@
 package com.radiothing.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,6 +84,23 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     checked = appSettings.useAsciiNotification,
                     onCheckedChange = { viewModel.setUseAsciiNotification(it) }
                 )
+                HorizontalDivider(color = GridLine)
+                SettingSwitch(
+                    title = "STREAM CACHE",
+                    subtitle = "Cache recent audio for instant re-tune (64 MB)",
+                    checked = appSettings.enableCache,
+                    onCheckedChange = { viewModel.setEnableCache(it) }
+                )
+            }
+
+            SettingSectionHeader(title = "EXPERIMENTAL")
+            SettingsCard {
+                SettingSwitch(
+                    title = "PRE-WARM NEXT STATION",
+                    subtitle = "Pre-buffer next in queue. Uses extra data.",
+                    checked = appSettings.enablePreWarm,
+                    onCheckedChange = { viewModel.setEnablePreWarm(it) }
+                )
             }
 
             SettingSectionHeader(title = "SLEEP TIMER")
@@ -132,7 +150,8 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 letterSpacing = 1.5.sp,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(16.dp))
+            // Clear the floating dock so last setting isn't obscured
+            Spacer(Modifier.height(140.dp))
         }
     }
 }
@@ -157,11 +176,7 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Panel)
-            .then(
-                androidx.compose.foundation.BorderStroke(1.dp, GridLine).let {
-                    Modifier
-                }
-            ),
+            .border(1.dp, GridLine, RoundedCornerShape(16.dp)),
         content = content
     )
 }

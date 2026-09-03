@@ -15,14 +15,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.radiothing.ui.components.DotMatrixIcon
+import com.radiothing.ui.components.IconType
 import com.radiothing.ui.components.countryCodeToEmoji
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
@@ -71,6 +70,22 @@ fun NowPlayingScreen(
     var lastHapticBlock by remember { mutableIntStateOf(-1) }
     var showQueue by remember { mutableStateOf(false) }
     var showSleep by remember { mutableStateOf(false) }
+    var showAddToPlaylist by remember { mutableStateOf(false) }
+    var micPermissionRequested by remember { mutableStateOf(false) }
+
+    // Contextual mic-permission ask — the visualizer is the only consumer.
+    // Requested on first Now Playing open (not cold start), one shot per session;
+    // denial simply keeps the synthetic waveform. No rationale dialog needed.
+    LaunchedEffect(uiState.isPlaying) {
+        if (uiState.isPlaying && !micPermissionRequested) {
+            micPermissionRequested = true
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M &&
+                androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                (context as? android.app.Activity)?.requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 7001)
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -80,7 +95,8 @@ fun NowPlayingScreen(
             .navigationBarsPadding()
             .padding(horizontal = 16.dp)
     ) {
-        // ── Header — 48dp, pill-aware, no hairline divider (scope carries chrome)
+
+        // ── Header — 48dp, pill-aware, no hairline divider (scope carries chrome) back, Live
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -91,10 +107,9 @@ fun NowPlayingScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White, modifier = Modifier.size(22.dp))
             }
             Column(
-                modifier = Modifier.weight(1f),
+//                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("SCOPE", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 2.sp)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val inf = rememberInfiniteTransition(label = "live")
                     val a by inf.animateFloat(0.35f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "a")
@@ -111,16 +126,6 @@ fun NowPlayingScreen(
                         fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp
                     )
                 }
-            }
-            // Favorite — pill 48dp, heart only (no halo), red when saved
-            IconButton(onClick = { viewModel.toggleFavorite() }, modifier = Modifier.size(48.dp)) {
-                val fav = uiState.currentStation?.isFavorite == true
-                Icon(
-                    if (fav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Favorite",
-                    tint = if (fav) BrightRed else TextWhite35,
-                    modifier = Modifier.size(22.dp)
-                )
             }
         }
 
@@ -141,13 +146,62 @@ fun NowPlayingScreen(
             Spacer(Modifier.height(10.dp))
         }
 
-        // ── CRT — hero fills flex so no bottom wasteland; grid + real equalizer
+
+        // ── Dossier — station name as scope label, pill enclosure
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(100.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = uiState.currentStation?.name?.uppercase() ?: "NO SPECIMEN",
+                        color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 20.sp, letterSpacing = 0.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        if (uiState.currentStation?.country?.isNotEmpty() == true) {
+                            Text(uiState.currentStation!!.country.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp, maxLines = 1)
+                        }
+                        if ((uiState.currentStation?.votes ?: 0) > 0) {
+                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        }
+                        if (uiState.queue.size > 1) {
+                            Text("${uiState.queueIndex + 1}/${uiState.queue.size} IN TRAY", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Tags — horizontal pill row, scroll not needed (take 4)
+        val tags = uiState.currentStation?.tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.take(4) ?: emptyList()
+        if (tags.isNotEmpty()) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                tags.forEach { tag ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Ink)
+                            .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(tag.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.6.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        // ── Visualizer — hero fills flex so no bottom wasteland; grid + real equalizer
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .clip(RoundedCornerShape(20.dp))
-                .background(Panel)
                 .border(1.dp, GridLine, RoundedCornerShape(20.dp))
                 .padding(10.dp)
         ) {
@@ -157,22 +211,7 @@ fun NowPlayingScreen(
                     .fillMaxSize()
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFF050507))
-                    .border(1.dp, Hairline, RoundedCornerShape(16.dp))
             ) {
-                // Grid — hairline, behind waveform
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val stepX = size.width / 8
-                    val stepY = size.height / 4
-                    for (i in 1..7) {
-                        drawLine(color = Color(0xFF1A1A1E), start = Offset(stepX * i, 0f), end = Offset(stepX * i, size.height), strokeWidth = 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
-                    }
-                    for (i in 1..3) {
-                        drawLine(color = Color(0xFF1A1A1E), start = Offset(0f, stepY * i), end = Offset(size.width, stepY * i), strokeWidth = 1f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
-                    }
-                    // center cross
-                    drawLine(color = Color(0xFF232326), start = Offset(size.width / 2, 0f), end = Offset(size.width / 2, size.height), strokeWidth = 1f)
-                    drawLine(color = Color(0xFF232326), start = Offset(0f, size.height / 2), end = Offset(size.width, size.height / 2), strokeWidth = 1f)
-                }
                 // Equalizer — REAL FFT when available, dotted bars in RED+WHITE like reference image
                 StreamDotEqualizer(audioSessionId = audioSessionId, isPlaying = uiState.isPlaying, isBuffering = uiState.isBuffering, modifier = Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 8.dp))
 
@@ -239,82 +278,66 @@ fun NowPlayingScreen(
             }
         }
 
-        Spacer(Modifier.height(8.dp))
 
-        // ── Dossier — station name as scope label, pill enclosure
+
+
+
+        Spacer(Modifier.height(56.dp))
+
+        // ── Transport — primary pill, clear hierarchy: Prev / PLAY / Next only
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(100.dp))
-                .background(Panel)
-                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+//                .background(Panel)
+//                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = uiState.currentStation?.name?.uppercase() ?: "NO SPECIMEN",
-                        color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 0.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
-                    )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Prev — 56dp, labelled, disabled state muted
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.previous() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    DotMatrixIcon(type = IconType.PREV, size = 26.dp, color = if (uiState.queue.size > 1) Color.White else Color(0xFF555555))
                     Spacer(Modifier.height(2.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        if (uiState.currentStation?.country?.isNotEmpty() == true) {
-                            Text(uiState.currentStation!!.country.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp, maxLines = 1)
-                        }
-                        if ((uiState.currentStation?.votes ?: 0) > 0) {
-                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        }
-                        if (uiState.queue.size > 1) {
-                            Text("${uiState.queueIndex + 1}/${uiState.queue.size} IN TRAY", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp)
-                        }
-                    }
+                    Text("PREV", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
                 }
-                // Share — pill 40dp, circular
-                IconButton(onClick = {
-                    uiState.currentStation?.let { s ->
-                        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "${s.name} - ${s.urlResolved.ifEmpty { s.url }}") }
-                        context.startActivity(Intent.createChooser(send, "Share specimen"))
-                    }
-                }, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Default.Share, contentDescription = "Share", tint = TextWhite35, modifier = Modifier.size(18.dp))
+                // Play — 72dp hero, red, single focal point
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(BrightRed)
+                        .clickable { viewModel.togglePlayPause() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    DotMatrixIcon(type = if (uiState.isPlaying) IconType.PAUSE else IconType.PLAY, size = 32.dp, color = Color.White)
+                }
+                // Next
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.next() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                    DotMatrixIcon(type = IconType.NEXT, size = 26.dp, color = if (uiState.queue.size > 1) Color.White else Color(0xFF555555))
+                    Spacer(Modifier.height(2.dp))
+                    Text("NEXT", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
                 }
             }
         }
 
-        // Tags — horizontal pill row, scroll not needed (take 4)
-        val tags = uiState.currentStation?.tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.take(4) ?: emptyList()
-        if (tags.isNotEmpty()) {
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                tags.forEach { tag ->
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(100.dp))
-                            .background(Ink)
-                            .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                            .padding(horizontal = 10.dp, vertical = 6.dp)
-                    ) {
-                        Text(tag.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.6.sp)
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(56.dp))
 
         // ── Volume — single pill: blocks ARE the slider (tap or slide anywhere on the track)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(100.dp))
-                .background(Panel)
-                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+//                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("VOL", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
                 Spacer(Modifier.width(10.dp))
-                val blocks = 12
+                val blocks = 10
                 val filled = (uiState.volume * blocks).toInt()
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -325,7 +348,7 @@ fun NowPlayingScreen(
                         .pointerInput(Unit) {
                             detectTapGestures { offset ->
                                 val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-                                val block = (fraction * 12).toInt()
+                                val block = (fraction * blocks).toInt()
                                 if (block != lastHapticBlock) {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     lastHapticBlock = block
@@ -336,7 +359,7 @@ fun NowPlayingScreen(
                         .pointerInput(Unit) {
                             detectHorizontalDragGestures { change, _ ->
                                 val fraction = (change.position.x / size.width).coerceIn(0f, 1f)
-                                val block = (fraction * 12).toInt()
+                                val block = (fraction * blocks).toInt()
                                 if (block != lastHapticBlock) {
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     lastHapticBlock = block
@@ -351,60 +374,16 @@ fun NowPlayingScreen(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(8.dp)
+                                .height(10.dp)
                                 .clip(RoundedCornerShape(100.dp))
                                 .background(if (idx < filled) BrightRed else Color(0xFF1A1A1E))
                         )
                     }
                 }
                 Spacer(Modifier.width(10.dp))
-                Text("${(uiState.volume * 100).toInt()}%", color = Color.White, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
         }
-
-        Spacer(Modifier.height(6.dp))
-
-        // ── Transport — primary pill, clear hierarchy: Prev / PLAY / Next only
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(100.dp))
-                .background(Panel)
-                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Prev — 56dp, labelled, disabled state muted
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.previous() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                    Icon(Icons.Default.SkipPrevious, contentDescription = "Previous", tint = if (uiState.queue.size > 1) Color.White else Color(0xFF555555), modifier = Modifier.size(26.dp))
-                    Spacer(Modifier.height(2.dp))
-                    Text("PREV", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
-                }
-                // Play — 72dp hero, red, single focal point
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .background(BrightRed)
-                        .clickable { viewModel.togglePlayPause() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(if (uiState.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = if (uiState.isPlaying) "Pause" else "Play", tint = Color.White, modifier = Modifier.size(32.dp))
-                }
-                // Next
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.next() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
-                    Icon(Icons.Default.SkipNext, contentDescription = "Next", tint = if (uiState.queue.size > 1) Color.White else Color(0xFF555555), modifier = Modifier.size(26.dp))
-                    Spacer(Modifier.height(2.dp))
-                    Text("NEXT", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
-                }
-            }
-        }
-
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(20.dp))
 
         // ── Utility — secondary pill, distinct from transport, labelled, not crowded
         Box(
@@ -427,6 +406,7 @@ fun NowPlayingScreen(
                     onClick = { viewModel.toggleFavorite() }
                 )
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
+                UtilityChip(icon = Icons.AutoMirrored.Filled.PlaylistAdd, label = "TRAY+", active = false, onClick = { showAddToPlaylist = true })
                 UtilityChip(icon = Icons.Default.Timer, label = if (uiState.sleepRemainingMs > 0) "${uiState.sleepRemainingMs / 60000}M" else "SLEEP", active = uiState.sleepRemainingMs > 0, onClick = { showSleep = true })
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
                 UtilityChip(icon = Icons.Default.Share, label = "SHARE", onClick = {
@@ -436,16 +416,22 @@ fun NowPlayingScreen(
                     }
                 })
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
-                UtilityChip(icon = Icons.Filled.QueueMusic, label = "QUEUE${if (uiState.queue.size > 1) " ${uiState.queueIndex + 1}/${uiState.queue.size}" else ""}", onClick = { showQueue = true })
+                UtilityChip(icon = Icons.AutoMirrored.Filled.QueueMusic, label = "QUEUE${if (uiState.queue.size > 1) " ${uiState.queueIndex + 1}/${uiState.queue.size}" else ""}", onClick = { showQueue = true })
             }
         }
 
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(20.dp))
     }
 
     // ── Queue sheet — board style, pill rows
     if (showQueue) {
-        ModalBottomSheet(onDismissRequest = { showQueue = false }, containerColor = Panel, contentColor = Color.White, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)) {
+        ModalBottomSheet(
+            onDismissRequest = { showQueue = false },
+            containerColor = PureBlack,
+            contentColor = Color.White,
+            scrimColor = PureBlack.copy(alpha = 0.75f),
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("TRAY", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.5.sp)
@@ -462,7 +448,7 @@ fun NowPlayingScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(100.dp))
-                                    .background(if (isCurrent) Ink else Color.Transparent)
+                                    .background(if (isCurrent) Panel else Ink)
                                     .border(1.dp, if (isCurrent) BrightRed.copy(0.4f) else GridLine, RoundedCornerShape(100.dp))
                                     .clickable { viewModel.seekInQueue(idx); showQueue = false }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
@@ -483,8 +469,36 @@ fun NowPlayingScreen(
         }
     }
 
+    if (showAddToPlaylist) {
+        val station = uiState.currentStation
+        if (station != null) {
+            com.radiothing.ui.components.AddToPlaylistSheet(
+                station = station,
+                playlists = viewModel.playlists.collectAsStateWithLifecycle().value,
+                counts = viewModel.playlistCounts.collectAsStateWithLifecycle().value,
+                onAddTo = { id ->
+                    viewModel.addStationToPlaylist(id)
+                    showAddToPlaylist = false
+                },
+                onCreateAndAdd = { name ->
+                    viewModel.createPlaylistAndAddStation(name)
+                    showAddToPlaylist = false
+                },
+                onDismiss = { showAddToPlaylist = false }
+            )
+        } else {
+            showAddToPlaylist = false
+        }
+    }
+
     if (showSleep) {
-        ModalBottomSheet(onDismissRequest = { showSleep = false }, containerColor = Panel, contentColor = Color.White, shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)) {
+        ModalBottomSheet(
+            onDismissRequest = { showSleep = false },
+            containerColor = PureBlack,
+            contentColor = Color.White,
+            scrimColor = PureBlack.copy(alpha = 0.75f),
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("SLEEP", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.5.sp)
                 Text("Scope dims and tray stops", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
