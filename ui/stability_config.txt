@@ -1,0 +1,10 @@
+// Compose stability configuration — makes domain models + collections skippable
+// so Lazy rows skip recomposition when their data is unchanged.
+com.radiothing.domain.model.*
+com.radiothing.ui.components.FilterSelection
+java.util.List
+kotlin.collections.List
+java.util.Set
+kotlin.collections.Set
+java.util.Map
+kotlin.collections.Map

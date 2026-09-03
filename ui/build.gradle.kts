@@ -20,6 +20,11 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // Compose stability config — RadioStation + List treated stable → rows skip recomposition
+        freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=${project.rootDir}/ui/stability_config.txt"
+        )
     }
 
     buildFeatures {
