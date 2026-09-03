@@ -32,6 +32,12 @@ interface PlayerManager {
     fun cancelSleepTimer()
     fun release()
 
+    /**
+     * Re-arm the last session after process death — restores queue/current
+     * station into state WITHOUT starting playback. User taps play to resume.
+     */
+    fun restoreLastSession()
+
     // Called by service to ack commands
     fun consumePlayCommand()
     fun consumePauseCommand()
