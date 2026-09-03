@@ -7,6 +7,7 @@ import com.radiothing.domain.model.RadioStation
 import com.radiothing.domain.repository.RecentlyPlayedRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class RecentlyPlayedRepositoryImpl @Inject constructor(
@@ -17,6 +18,14 @@ class RecentlyPlayedRepositoryImpl @Inject constructor(
     override fun getRecentlyPlayed(): Flow<List<RadioStation>> {
         return combine(dao.getAll(), favoriteDao.getAllIds()) { entities, favoriteIds ->
             entities.map { it.toRadioStation(isFavorite = favoriteIds.contains(it.stationUuid)) }
+        }
+    }
+
+    override suspend fun getRecentlyPlayedOnce(limit: Int): List<RadioStation> {
+        return try {
+            dao.getAll().first().take(limit).map { it.toRadioStation(false) }
+        } catch (_: Exception) {
+            emptyList()
         }
     }
 
