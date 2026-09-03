@@ -5,6 +5,7 @@ import com.radiothing.domain.model.Country
 import com.radiothing.domain.model.Genre
 import com.radiothing.domain.model.Language
 import com.radiothing.domain.model.RadioStation
+import com.radiothing.domain.model.StationQuery
 import com.radiothing.domain.repository.StationRepository
 import javax.inject.Inject
 
@@ -12,9 +13,20 @@ class StationRepositoryImpl @Inject constructor(
     private val api: RadioBrowserApi
 ) : StationRepository {
 
-    override suspend fun searchStations(query: String, offset: Int, limit: Int): Result<List<RadioStation>> {
+    override suspend fun searchStations(query: StationQuery): Result<List<RadioStation>> {
         return try {
-            val response = api.searchStations(name = query, offset = offset, limit = limit)
+            val response = api.searchStations(
+                name = query.name,
+                tag = query.tag,
+                country = query.country,
+                language = query.language,
+                order = query.order.apiValue,
+                reverse = query.order == com.radiothing.domain.model.StationOrder.VOTES ||
+                    query.order == com.radiothing.domain.model.StationOrder.BITRATE ||
+                    query.order == com.radiothing.domain.model.StationOrder.CLICKS,
+                offset = query.offset,
+                limit = query.limit
+            )
             Result.success(response.map { it.toRadioStation() })
         } catch (e: Exception) {
             Result.failure(e)
