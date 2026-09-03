@@ -65,6 +65,27 @@ class PlayerManagerImpl @Inject constructor(
                 crossfadeDurationMs = settings.crossfadeDuration * 1000L
             }
         }
+        restoreLastSession()
+    }
+
+    override fun restoreLastSession() {
+        scope.launch {
+            try {
+                val history = recentlyPlayedRepository.getRecentlyPlayedOnce()
+                if (history.isNotEmpty() && _playerState.value.currentStation == null) {
+                    val station = history.first()
+                    _playerState.update {
+                        it.copy(
+                            currentStation = station,
+                            queue = history,
+                            queueIndex = 0,
+                            isPlaying = false,
+                            isBuffering = false
+                        )
+                    }
+                }
+            } catch (_: Exception) {}
+        }
     }
 
     // --- UI → Service: send commands ---
@@ -96,6 +117,12 @@ class PlayerManagerImpl @Inject constructor(
     override fun stop() {
         _pauseCommand.value = true
         _playerState.update { it.copy(isPlaying = false) }
+        // Sleep-timer fade ended playback — restore pre-fade volume so the
+        // next play isn't silent.
+        sleepTimerManager.consumePreFadeVolume()?.let { restored ->
+            _volume.value = restored
+            _volumeCommand.value = restored
+        }
     }
 
     override fun next() {
@@ -131,11 +158,23 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun startSleepTimer(durationMs: Long) {
-        sleepTimerManager.start(durationMs, ::setVolume) { stop() }
+        // Snapshot current volume so the fade can be undone later
+        sleepTimerManager.currentVolumeSnapshot = _volume.value
+        sleepTimerManager.start(durationMs, ::fadeVolume) { stop() }
     }
 
     override fun cancelSleepTimer() {
         sleepTimerManager.cancel()
+        // If a fade was mid-flight, bring volume back immediately
+        sleepTimerManager.consumePreFadeVolume()?.let { restored ->
+            _volume.value = restored
+            _volumeCommand.value = restored
+        }
+    }
+
+    /** Fade channel — lowers audible volume without destroying the user's set volume. */
+    private fun fadeVolume(v: Float) {
+        _volumeCommand.value = v.coerceIn(0f, _volume.value)
     }
 
     override fun release() {
