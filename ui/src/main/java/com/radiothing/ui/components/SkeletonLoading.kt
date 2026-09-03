@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+// shimmer disabled for max smoothness — imports kept for future use
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -22,7 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.unit.dp
@@ -42,24 +43,15 @@ fun StationListSkeleton(modifier: Modifier = Modifier) {
 
 @Composable
 private fun SkeletonItem() {
-    val infiniteTransition = rememberInfiniteTransition(label = "shimmer")
-    val alpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = FastOutLinearInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "alpha"
-    )
-
+    // Static shimmer for 120Hz butter — no InfiniteTransition wakeups while loading
+    val alpha = 0.55f
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(RadioColors.Surface, RadioShapes.Card)
             .border(1.dp, RadioColors.Border, RadioShapes.Card)
             .padding(14.dp)
-            .alpha(alpha),
+            .graphicsLayer(alpha = alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
