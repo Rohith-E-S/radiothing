@@ -46,3 +46,5 @@ build/
 
 # Google Services (if applicable, uncomment if needed but generally ignored)
 # google-services.json
+DESIGN.md
+PRODUCT.md
