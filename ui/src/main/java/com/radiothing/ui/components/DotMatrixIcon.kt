@@ -10,7 +10,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 enum class IconType {
-    BROWSE, FAVORITES, HISTORY, SETTINGS
+    BROWSE, FAVORITES, PLAYLISTS, HISTORY, SETTINGS, FILTER,
+    PLAY, PAUSE, PREV, NEXT
 }
 
 @Composable
@@ -18,7 +19,6 @@ fun DotMatrixIcon(
     type: IconType,
     size: Dp = 24.dp,
     color: Color,
-    isSelected: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // 5x5 grid representation for icons
@@ -37,6 +37,14 @@ fun DotMatrixIcon(
             listOf(0, 1, 1, 1, 0),
             listOf(0, 0, 1, 0, 0)
         )
+        // Playlists — stacked tapes/rows in a well, distinct from the favorites heart
+        IconType.PLAYLISTS -> listOf(
+            listOf(1, 1, 1, 1, 1),
+            listOf(1, 0, 0, 0, 1),
+            listOf(1, 1, 1, 1, 1),
+            listOf(1, 0, 0, 0, 1),
+            listOf(1, 1, 1, 1, 1)
+        )
         IconType.HISTORY -> listOf(
             listOf(0, 1, 1, 1, 0),
             listOf(1, 0, 1, 0, 1),
@@ -50,6 +58,46 @@ fun DotMatrixIcon(
             listOf(1, 1, 0, 1, 1),
             listOf(0, 1, 1, 1, 0),
             listOf(1, 0, 1, 0, 1)
+        )
+        // ASCII-art funnel — wide mouth narrowing to a stem, reads as "filter" in dot language
+        IconType.FILTER -> listOf(
+            listOf(1, 1, 1, 1, 1),
+            listOf(0, 1, 1, 1, 0),
+            listOf(0, 0, 1, 0, 0),
+            listOf(0, 0, 1, 0, 0),
+            listOf(0, 0, 1, 0, 0)
+        )
+        // Play — right-pointing triangle in 5x5
+        IconType.PLAY -> listOf(
+            listOf(0, 0, 1, 0, 0),
+            listOf(0, 0, 1, 1, 0),
+            listOf(0, 0, 1, 1, 1),
+            listOf(0, 0, 1, 1, 0),
+            listOf(0, 0, 1, 0, 0)
+        )
+        // Pause — two vertical bars
+        IconType.PAUSE -> listOf(
+            listOf(0, 1, 0, 1, 0),
+            listOf(0, 1, 0, 1, 0),
+            listOf(0, 1, 0, 1, 0),
+            listOf(0, 1, 0, 1, 0),
+            listOf(0, 1, 0, 1, 0)
+        )
+        // Prev — left-pointing triangle + bar on the right
+        IconType.PREV -> listOf(
+            listOf(0, 0, 1, 0, 1),
+            listOf(0, 1, 1, 0, 1),
+            listOf(1, 1, 1, 0, 1),
+            listOf(0, 1, 1, 0, 1),
+            listOf(0, 0, 1, 0, 1)
+        )
+        // Next — bar on the left + right-pointing triangle
+        IconType.NEXT -> listOf(
+            listOf(1, 0, 1, 0, 0),
+            listOf(1, 0, 1, 1, 0),
+            listOf(1, 0, 1, 1, 1),
+            listOf(1, 0, 1, 1, 0),
+            listOf(1, 0, 1, 0, 0)
         )
     }
 

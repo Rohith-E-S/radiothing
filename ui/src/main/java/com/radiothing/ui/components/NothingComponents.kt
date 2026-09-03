@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -39,7 +40,18 @@ fun NothingTextField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        placeholder = { Text(text = placeholder, fontFamily = Ndot57, color = TextWhite35, fontSize = 13.sp, letterSpacing = 0.8.sp) },
+        singleLine = true,
+        placeholder = {
+            Text(
+                text = placeholder,
+                fontFamily = Ndot57,
+                color = TextWhite35,
+                fontSize = 12.sp,
+                letterSpacing = 0.8.sp,
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        },
         keyboardOptions = KeyboardOptions(imeAction = if (onSearch != null) ImeAction.Search else ImeAction.Default),
         keyboardActions = KeyboardActions(onSearch = { onSearch?.invoke() }),
         colors = TextFieldDefaults.colors(
@@ -77,6 +89,7 @@ fun NothingTextField(
         modifier = modifier
             .clip(RoundedCornerShape(100.dp))
             .border(1.dp, Hairline, RoundedCornerShape(100.dp))
+            .heightIn(min = 48.dp, max = 52.dp)
     )
 }
 

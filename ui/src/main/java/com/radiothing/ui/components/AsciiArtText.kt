@@ -15,10 +15,6 @@ fun AsciiArtText(
     modifier: Modifier = Modifier,
     compact: Boolean = false
 ) {
-    val blockChar = "█"
-    val halfBlock = "▄"
-    val space = " "
-    
     // Simple 3x3 block font mapping for demonstration
     fun getCharMap(c: Char): List<String> {
         return when (c.uppercaseChar()) {
