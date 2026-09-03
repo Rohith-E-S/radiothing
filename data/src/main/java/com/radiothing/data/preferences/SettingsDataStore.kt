@@ -17,13 +17,17 @@ class SettingsDataStore @Inject constructor(
         val CROSSFADE_DURATION = intPreferencesKey("crossfade_duration")
         val USE_ASCII_NOTIFICATION = booleanPreferencesKey("use_ascii_notification")
         val BUFFER_SIZE = intPreferencesKey("buffer_size")
+        val ENABLE_CACHE = booleanPreferencesKey("enable_cache")
+        val ENABLE_PRE_WARM = booleanPreferencesKey("enable_pre_warm")
     }
 
     val settings: Flow<AppSettings> = dataStore.data.map { preferences ->
         AppSettings(
             crossfadeDuration = preferences[CROSSFADE_DURATION] ?: 3,
             useAsciiNotification = preferences[USE_ASCII_NOTIFICATION] ?: false,
-            bufferSize = preferences[BUFFER_SIZE] ?: 5000
+            bufferSize = preferences[BUFFER_SIZE] ?: 5000,
+            enableCache = preferences[ENABLE_CACHE] ?: true,
+            enablePreWarm = preferences[ENABLE_PRE_WARM] ?: false
         )
     }
 
@@ -42,6 +46,18 @@ class SettingsDataStore @Inject constructor(
     suspend fun updateBufferSize(size: Int) {
         dataStore.edit { preferences ->
             preferences[BUFFER_SIZE] = size
+        }
+    }
+
+    suspend fun updateEnableCache(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ENABLE_CACHE] = enabled
+        }
+    }
+
+    suspend fun updateEnablePreWarm(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ENABLE_PRE_WARM] = enabled
         }
     }
 }

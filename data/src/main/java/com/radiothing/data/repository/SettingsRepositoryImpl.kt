@@ -25,4 +25,12 @@ class SettingsRepositoryImpl @Inject constructor(
     override suspend fun updateBufferSize(size: Int) {
         dataStore.updateBufferSize(size)
     }
+
+    override suspend fun updateEnableCache(enabled: Boolean) {
+        dataStore.updateEnableCache(enabled)
+    }
+
+    override suspend fun updateEnablePreWarm(enabled: Boolean) {
+        dataStore.updateEnablePreWarm(enabled)
+    }
 }
