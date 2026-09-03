@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,26 +46,27 @@ fun MiniPlayer(
     onPlayPauseClick: () -> Unit,
     onExpandClick: () -> Unit,
     onNext: () -> Unit,
-    onPrevious: () -> Unit
+    onPrevious: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
-        visible = playerState.currentStation != null,
+        visible = playerState.currentStation != null && (playerState.isPlaying || playerState.isBuffering),
         enter = slideInVertically(initialOffsetY = { it }),
-        exit = slideOutVertically(targetOffsetY = { it })
+        exit = slideOutVertically(targetOffsetY = { it }),
+        modifier = modifier
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Ink)
                 .semantics { contentDescription = "Mini player, tap to expand, swipe up" }
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 0.dp, vertical = 0.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(100.dp))
+                    .clip(RoundedCornerShape(28.dp))
                     .background(Panel)
-                    .border(1.dp, if (playerState.isPlaying) BrightRed.copy(alpha = 0.45f) else GridLine, RoundedCornerShape(100.dp))
+                    .border(1.dp, if (playerState.isPlaying) BrightRed.copy(alpha = 0.45f) else GridLine.copy(alpha = 0.6f), RoundedCornerShape(28.dp))
                     .pointerInput(Unit) {
                         detectVerticalDragGestures { change, dragAmount ->
                             change.consume()
@@ -140,6 +143,42 @@ fun MiniPlayer(
                 }
 
                 Spacer(Modifier.width(10.dp))
+                // Prev — compact skip-back, mirrors the Next enclosure button
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(Color.Transparent)
+                        .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                        .clickable(enabled = playerState.queue.size > 1, onClick = onPrevious),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SkipPrevious,
+                        contentDescription = "Previous station",
+                        tint = if (playerState.queue.size > 1) Color.White else Color(0xFF555555),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                // Next — compact skip, keeps bad streams one tap away
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(100.dp))
+                        .background(Color.Transparent)
+                        .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                        .clickable(enabled = playerState.queue.size > 1, onClick = onNext),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SkipNext,
+                        contentDescription = "Next station",
+                        tint = if (playerState.queue.size > 1) Color.White else Color(0xFF555555),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
                 // Play/Pause — enclosure button
                 Box(
                     modifier = Modifier

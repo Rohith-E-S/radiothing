@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,9 +31,11 @@ import kotlinx.coroutines.launch
 @Composable
 fun HistoryScreen(
     viewModel: HistoryViewModel,
+    playerManager: com.radiothing.player.PlayerManager,
     onStationClick: (String) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val playerStateState = playerManager.playerState.collectAsStateWithLifecycle()
     var showClearConfirm by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -90,21 +93,26 @@ fun HistoryScreen(
             Spacer(Modifier.height(12.dp))
 
             if (uiState.history.isEmpty()) {
-                EmptyState(type = EmptyStateType.NO_HISTORY, modifier = Modifier.fillMaxSize())
+                EmptyState(type = EmptyStateType.NO_HISTORY, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(bottom = 16.dp, top = 4.dp)
+                    contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
                 ) {
-                    items(uiState.history, key = { it.stationUuid }) { station ->
+                    items(uiState.history, key = { it.stationUuid }, contentType = { "station" }) { station ->
+                        val isPlaying by remember(station.stationUuid) {
+                            derivedStateOf {
+                                val ps = playerStateState.value
+                                ps.currentStation?.stationUuid == station.stationUuid && ps.isPlaying
+                            }
+                        }
+                        val stationClick = remember(station.stationUuid) { { viewModel.playStation(station.stationUuid); onStationClick(station.stationUuid) } }
+                        val favClick = remember(station.stationUuid) { { viewModel.toggleFavorite(station) } }
                         StationListItem(
                             station = station,
-                            isPlaying = false,
-                            onStationClick = {
-                                viewModel.playStation(station.stationUuid)
-                                onStationClick(station.stationUuid)
-                            },
-                            onFavoriteClick = { viewModel.toggleFavorite(station) }
+                            isPlaying = isPlaying,
+                            onStationClick = stationClick,
+                            onFavoriteClick = favClick
                         )
                     }
                 }
@@ -129,6 +137,6 @@ fun HistoryScreen(
                 shape = RoundedCornerShape(16.dp)
             )
         }
-        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
+        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 88.dp))
     }
 }

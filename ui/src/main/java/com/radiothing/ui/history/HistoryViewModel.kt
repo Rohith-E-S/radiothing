@@ -20,7 +20,8 @@ class HistoryViewModel @Inject constructor(
     private val getRecentlyPlayedUseCase: GetRecentlyPlayedUseCase,
     private val clearHistoryUseCase: ClearHistoryUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val playerManager: PlayerManager
+    private val playerManager: PlayerManager,
+    private val stationRepository: com.radiothing.domain.repository.StationRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HistoryUiState())
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
@@ -43,6 +44,8 @@ class HistoryViewModel @Inject constructor(
         val station = _uiState.value.history.find { it.stationUuid == stationUuid }
         if (station != null) {
             playerManager.play(station, _uiState.value.history)
+            // Feed the community catalog's click counters
+            viewModelScope.launch { try { stationRepository.clickStation(stationUuid) } catch (_: Exception) {} }
         }
     }
 

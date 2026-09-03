@@ -18,6 +18,8 @@ import javax.inject.Inject
 class FavoritesViewModel @Inject constructor(
     private val getFavoritesUseCase: GetFavoritesUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val favoriteRepository: com.radiothing.domain.repository.FavoriteRepository,
+    private val stationRepository: com.radiothing.domain.repository.StationRepository,
     private val playerManager: PlayerManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(FavoritesUiState())
@@ -35,6 +37,25 @@ class FavoritesViewModel @Inject constructor(
         val station = _uiState.value.favorites.find { it.stationUuid == stationUuid }
         if (station != null) {
             playerManager.play(station, _uiState.value.favorites)
+            // Feed the community catalog's click counters
+            viewModelScope.launch { try { stationRepository.clickStation(stationUuid) } catch (_: Exception) {} }
+        }
+    }
+
+    /** Returns the station that was just unfavorited, for undo. */
+    fun toggleFavoriteForUndo(station: RadioStation): RadioStation? {
+        val wasFavorite = station.isFavorite
+        viewModelScope.launch {
+            toggleFavoriteUseCase(station)
+        }
+        return if (wasFavorite) station else null
+    }
+
+    fun restoreFavorite(station: RadioStation) {
+        viewModelScope.launch {
+            if (!favoriteRepository.isFavorite(station.stationUuid)) {
+                favoriteRepository.addFavorite(station)
+            }
         }
     }
 
