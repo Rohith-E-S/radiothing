@@ -4,9 +4,10 @@ import com.radiothing.domain.model.Country
 import com.radiothing.domain.model.Genre
 import com.radiothing.domain.model.Language
 import com.radiothing.domain.model.RadioStation
+import com.radiothing.domain.model.StationQuery
 
 interface StationRepository {
-    suspend fun searchStations(query: String, offset: Int, limit: Int): Result<List<RadioStation>>
+    suspend fun searchStations(query: StationQuery): Result<List<RadioStation>>
     suspend fun getStationsByCountry(country: String, offset: Int, limit: Int): Result<List<RadioStation>>
     suspend fun getStationsByGenre(tag: String, offset: Int, limit: Int): Result<List<RadioStation>>
     suspend fun getStationsByLanguage(language: String, offset: Int, limit: Int): Result<List<RadioStation>>
