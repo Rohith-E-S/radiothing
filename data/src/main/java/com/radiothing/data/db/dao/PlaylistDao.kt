@@ -40,4 +40,12 @@ interface PlaylistDao {
 
     @Query("SELECT COUNT(*) FROM playlist_stations WHERE playlistId = :playlistId")
     suspend fun getStationCount(playlistId: Long): Int
+
+    @Query("SELECT playlistId, COUNT(*) as stationCount FROM playlist_stations GROUP BY playlistId")
+    fun getPlaylistStationCounts(): Flow<List<PlaylistStationCount>>
 }
+
+data class PlaylistStationCount(
+    val playlistId: Long,
+    val stationCount: Int
+)

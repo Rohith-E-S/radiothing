@@ -27,6 +27,12 @@ class PlaylistRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getPlaylistStationCounts(): Flow<Map<Long, Int>> {
+        return dao.getPlaylistStationCounts().map { counts ->
+            counts.associate { it.playlistId to it.stationCount }
+        }
+    }
+
     override fun getPlaylistWithStations(playlistId: Long): Flow<PlaylistWithStations?> {
         val playlistFlow = dao.getPlaylistById(playlistId)
         val stationsFlow = dao.getPlaylistStations(playlistId)
