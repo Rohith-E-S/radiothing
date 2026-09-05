@@ -224,10 +224,10 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
             )
         }
         Spacer(Modifier.width(8.dp))
-        // Delete — trailing trash, 40dp touch
+        // Delete — trailing trash, 48dp touch
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(48.dp)
                 .clip(RoundedCornerShape(100.dp))
                 .clickable(onClickLabel = "Delete playlist", onClick = onDelete),
             contentAlignment = Alignment.Center

@@ -158,6 +158,8 @@ fun NowPlayingScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(100.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -571,29 +573,4 @@ private fun UtilityChip(icon: androidx.compose.ui.graphics.vector.ImageVector, l
     }
 }
 
-@Composable
-private fun OscilloTrace(isPlaying: Boolean, isBuffering: Boolean, modifier: Modifier = Modifier) {
-    val inf = rememberInfiniteTransition(label = "osc")
-    val phase by inf.animateFloat(0f, 6.28f, infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "phase")
-    val amp by inf.animateFloat(0.6f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "amp")
-    Canvas(modifier = modifier) {
-        if (!isPlaying || isBuffering) {
-            // flat line when idle
-            drawLine(color = Color(0xFF333333), start = Offset(0f, size.height / 2), end = Offset(size.width, size.height / 2), strokeWidth = 2f)
-            return@Canvas
-        }
-        val traceColor = Color(0xFFFF3344)
-        val path = androidx.compose.ui.graphics.Path()
-        val midY = size.height / 2
-        val a = 22f * amp
-        // oscilloscope sine with slight noise
-        for (x in 0..size.width.toInt() step 3) {
-            val xf = x.toFloat()
-            val y = midY + a * kotlin.math.sin(xf * 0.04f + phase).toFloat() + (kotlin.math.sin(xf * 0.09f + phase * 1.3f).toFloat() * 6f)
-            if (x == 0) path.moveTo(xf, y) else path.lineTo(xf, y)
-        }
-        drawPath(path, color = traceColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 3f))
-        // glow under
-        drawPath(path, color = traceColor.copy(alpha = 0.18f), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 9f))
-    }
-}
+
