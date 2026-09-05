@@ -1,12 +1,12 @@
 package com.radiothing.ui.components
 
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-// shimmer disabled for max smoothness — imports kept for future use
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import com.radiothing.ui.theme.Ndot57
@@ -43,15 +44,26 @@ fun StationListSkeleton(modifier: Modifier = Modifier) {
 
 @Composable
 private fun SkeletonItem() {
-    // Static shimmer for 120Hz butter — no InfiniteTransition wakeups while loading
-    val alpha = 0.55f
+    // Subtle pulse — animates alpha between 0.4 and 0.7 every 1.2s. Lighter than
+    // a sweeping shimmer (which on a 6+ item list costs 6 InfiniteTransitions and
+    // visible per-frame repaint), but clearly alive instead of dead-static.
+    val transition = rememberInfiniteTransition(label = "skeleton")
+    val alpha by transition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = FastOutLinearInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "skeleton_alpha"
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(RadioColors.Surface, RadioShapes.Card)
             .border(1.dp, RadioColors.Border, RadioShapes.Card)
             .padding(14.dp)
-            .graphicsLayer(alpha = alpha),
+            .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -67,9 +79,9 @@ private fun SkeletonItem() {
                 fontSize = 18.sp
             )
         }
-        
+
         Spacer(modifier = Modifier.width(12.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             // Title placeholder
             Text(

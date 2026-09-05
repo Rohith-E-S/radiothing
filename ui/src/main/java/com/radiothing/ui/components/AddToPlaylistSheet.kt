@@ -149,7 +149,10 @@ fun AddToPlaylistSheet(
                     .clip(RoundedCornerShape(100.dp))
                     .background(Ink)
                     .border(1.dp, if (newPlaylistName.isNotBlank()) BrightRed else GridLine, RoundedCornerShape(100.dp))
-                    .clickable(enabled = newPlaylistName.isNotBlank()) { onCreateAndAdd(newPlaylistName.trim()); }
+                    .clickable(enabled = newPlaylistName.isNotBlank()) {
+                        onCreateAndAdd(newPlaylistName.trim())
+                        newPlaylistName = "" // reset so the same name isn't added twice
+                    }
                     .padding(horizontal = 14.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -167,7 +170,10 @@ fun AddToPlaylistSheet(
                         .size(40.dp)
                         .clip(CircleShape)
                         .background(if (newPlaylistName.isNotBlank()) BrightRed else GridLine)
-                        .clickable(enabled = newPlaylistName.isNotBlank()) { onCreateAndAdd(newPlaylistName.trim()) },
+                        .clickable(enabled = newPlaylistName.isNotBlank()) {
+                            onCreateAndAdd(newPlaylistName.trim())
+                            newPlaylistName = ""
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Create playlist and add station", tint = Color.White, modifier = Modifier.size(20.dp))

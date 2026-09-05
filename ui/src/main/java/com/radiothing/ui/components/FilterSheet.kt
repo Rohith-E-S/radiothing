@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -165,7 +166,17 @@ fun FilterSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = Color(0xFF0A0A0C),
-        dragHandle = null
+        dragHandle = {
+            // Subtle hairline handle — matches the lab chrome instead of the default
+            // Material pill. 36dp wide so it's still tappable for users who don't drag.
+            Box(
+                modifier = Modifier
+                    .padding(vertical = 10.dp)
+                    .size(width = 36.dp, height = 3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(GridLine)
+            )
+        }
     ) {
         Column(
             modifier = Modifier
@@ -235,7 +246,9 @@ fun FilterSheet(
                 FilterSectionLabel("BITRATE  —  MULTI-SELECT")
                 FilterChipRow(
                     options = listOf("Any", "64", "128", "192", "256", "320"),
-                    selected = selectedBitrates,
+                    // "Any" reads as selected when the set is empty, so it doesn't
+                    // look like an unrelated idle chip in the row.
+                    selected = selectedBitrates + (if (selectedBitrates.isEmpty()) "Any" else ""),
                     onToggle = { toggleBitrate(it) }
                 )
 
@@ -243,7 +256,7 @@ fun FilterSheet(
                 FilterSectionLabel("CODEC  —  MULTI-SELECT")
                 FilterChipRow(
                     options = listOf("Any", "MP3", "AAC", "OGG", "FLAC"),
-                    selected = selectedCodecs,
+                    selected = selectedCodecs + (if (selectedCodecs.isEmpty()) "Any" else ""),
                     onToggle = { toggleCodec(it) }
                 )
             }

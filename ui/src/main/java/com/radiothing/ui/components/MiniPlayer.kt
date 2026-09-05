@@ -143,42 +143,46 @@ fun MiniPlayer(
                 }
 
                 Spacer(Modifier.width(10.dp))
-                // Prev — compact skip-back, mirrors the Next enclosure button
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(Color.Transparent)
-                        .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                        .clickable(enabled = playerState.queue.size > 1, onClick = onPrevious),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SkipPrevious,
-                        contentDescription = "Previous station",
-                        tint = if (playerState.queue.size > 1) Color.White else Color(0xFF555555),
-                        modifier = Modifier.size(18.dp)
-                    )
+                // Prev/next only render when a queue exists — otherwise they're
+                // visible but disabled and look broken for single-station playback.
+                if (playerState.queue.size > 1) {
+                    // Prev — compact skip-back, mirrors the Next enclosure button
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Color.Transparent)
+                            .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                            .clickable(enabled = playerState.queue.size > 1, onClick = onPrevious),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "Previous station",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    // Next — compact skip, keeps bad streams one tap away
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(100.dp))
+                            .background(Color.Transparent)
+                            .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                            .clickable(enabled = playerState.queue.size > 1, onClick = onNext),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "Next station",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
                 }
-                Spacer(Modifier.width(8.dp))
-                // Next — compact skip, keeps bad streams one tap away
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(Color.Transparent)
-                        .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                        .clickable(enabled = playerState.queue.size > 1, onClick = onNext),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.SkipNext,
-                        contentDescription = "Next station",
-                        tint = if (playerState.queue.size > 1) Color.White else Color(0xFF555555),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                Spacer(Modifier.width(8.dp))
                 // Play/Pause — enclosure button
                 Box(
                     modifier = Modifier
