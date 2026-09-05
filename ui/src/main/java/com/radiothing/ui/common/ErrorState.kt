@@ -25,7 +25,9 @@ fun ErrorState(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val glitchChars = listOf('░', '▒', '▓', '█')
+    // Glitch by permuting the word's own letters: block glyphs (█▓▒░) are
+    // missing from Ndot57 and fell back to the system font, jittering the
+    // headline's width/baseline on every swap. Letters only — no reflow.
     var glitchText by remember { mutableStateOf("ERROR") }
 
     // A permanent 100ms recomposition loop ignores the system-wide
@@ -35,10 +37,10 @@ fun ErrorState(
         if (reducedMotion) return@LaunchedEffect
         while (true) {
             delay(100)
-            if (Random.nextFloat() > 0.8f) {
-                glitchText = (1..5).map { glitchChars.random() }.joinToString("")
+            glitchText = if (Random.nextFloat() > 0.8f) {
+                "ERROR".toList().shuffled(Random).joinToString("")
             } else {
-                glitchText = "ERROR"
+                "ERROR"
             }
         }
     }
@@ -50,14 +52,22 @@ fun ErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "█▓▒░ $glitchText ░▒▓█",
-            color = BrightRed,
-            fontFamily = Ndot57,
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp,
-            textAlign = TextAlign.Center
-        )
+        // Decorative "▓▒░" fades drawn on canvas — the text glyphs fell back
+        // to the system font and jittered against the Ndot57 letters
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            com.radiothing.ui.components.BlockFade(color = BrightRed)
+            Spacer(Modifier.width(10.dp))
+            Text(
+                text = glitchText,
+                color = BrightRed,
+                fontFamily = Ndot57,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.width(10.dp))
+            com.radiothing.ui.components.BlockFade(color = BrightRed)
+        }
         
         Spacer(modifier = Modifier.height(16.dp))
         
