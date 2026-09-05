@@ -21,6 +21,14 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    testOptions {
+        unitTests {
+            // PlaybackException's constructor calls SystemClock.elapsedRealtime(),
+            // which has no implementation in unit tests — return defaults
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {

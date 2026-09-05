@@ -25,11 +25,10 @@ import androidx.media3.session.MediaSessionService
 import com.radiothing.domain.model.RadioStation
 import com.radiothing.domain.repository.RecentlyPlayedRepository
 import com.radiothing.domain.repository.SettingsRepository
-import com.radiothing.player.NextPreWarmer
-import com.radiothing.player.OffloadState
 import com.radiothing.player.PlayerManager
 import com.radiothing.player.RetryCoordinator
 import com.radiothing.player.StallWatchdog
+import com.radiothing.player.R
 import com.radiothing.player.datasource.StreamHttpDataSourceFactory
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -55,12 +54,6 @@ class RadioPlaybackService : MediaSessionService() {
 
     @Inject
     lateinit var playerManager: PlayerManager
-
-    @Inject
-    lateinit var offloadState: OffloadState
-
-    @Inject
-    lateinit var nextPreWarmer: NextPreWarmer
 
     private var mediaSession: MediaSession? = null
     private var exoPlayer: ExoPlayer? = null
@@ -153,8 +146,8 @@ class RadioPlaybackService : MediaSessionService() {
                 .build()
         } catch (_: Exception) {}
 
-        // OffloadState remains available for UI if needed; offloaded streams
-        // automatically fall back to synthetic visualizer via Visualizer attach failure
+        // Offloaded streams automatically fall back to the synthetic visualizer
+        // via Visualizer attach failure
 
         exoPlayer!!.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -231,7 +224,14 @@ class RadioPlaybackService : MediaSessionService() {
                 }
                 nm.createNotificationChannel(channel)
             }
-            val provider = DefaultMediaNotificationProvider(this)
+            // Post on our own channel so the user can control playback
+            // notification importance; without this Media3 uses its default channel
+            val provider = DefaultMediaNotificationProvider(
+                this,
+                { DefaultMediaNotificationProvider.DEFAULT_NOTIFICATION_ID },
+                "radio_playback",
+                R.string.radio_playback_channel_name
+            )
             try { provider.setSmallIcon(android.R.drawable.ic_media_play) } catch (_: Exception) {}
             setMediaNotificationProvider(provider)
         } catch (_: Exception) {}
@@ -366,15 +366,10 @@ class RadioPlaybackService : MediaSessionService() {
         // flaky station rewrite/reorder the Recently Played list.
         if (recordHistory) historyPendingFor = station
 
-        // Pre-warm only made sense when warmed bytes came back out of the shared
-        // cache; playback no longer reads that cache for live streams, so there
-        // is nothing to pre-warm. Any stale warm player is released.
-        nextPreWarmer.cancel()
     }
 
     private fun retryCurrentStation() {
         val station = currentStation ?: return
-        try { nextPreWarmer.cancel() } catch (_: Exception) {}
         playStation(station, emptyList(), 0, recordHistory = false)
     }
 
@@ -420,7 +415,6 @@ class RadioPlaybackService : MediaSessionService() {
         historyPendingFor = null
         stopStallWatchdog()
         retryCoordinator.cancel()
-        try { nextPreWarmer.cancel() } catch (_: Exception) {}
         releaseWakeLocks()
         powerLock = null
         wifiLock = null
