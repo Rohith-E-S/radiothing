@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.radiothing.data.preferences.SettingsDataStore
 import com.radiothing.domain.repository.RecentlyPlayedRepository
-import com.radiothing.domain.repository.SettingsRepository
 import com.radiothing.player.PlayerManager
 import com.radiothing.player.PlayerManagerImpl
 import com.radiothing.player.haptics.HapticFeedbackManager
@@ -48,7 +47,6 @@ object PlayerModule {
     fun providePlayerManager(
         app: Application,
         sleepTimerManager: SleepTimerManager,
-        settingsRepository: SettingsRepository,
         recentlyPlayedRepository: RecentlyPlayedRepository
-    ): PlayerManager = PlayerManagerImpl(app, sleepTimerManager, settingsRepository, recentlyPlayedRepository)
+    ): PlayerManager = PlayerManagerImpl(app, sleepTimerManager, recentlyPlayedRepository)
 }
