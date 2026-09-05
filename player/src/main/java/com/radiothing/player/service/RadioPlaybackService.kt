@@ -201,6 +201,8 @@ class RadioPlaybackService : MediaSessionService() {
         serviceScope.launch {
             playerManager.playCommand.collect { cmd ->
                 if (cmd != null) {
+                    // User-initiated tune: drop pending retries and start with a fresh budget
+                    retryCoordinator.cancel()
                     playStation(cmd.station, cmd.queue, cmd.queueIndex)
                     playerManager.consumePlayCommand()
                 }
@@ -289,7 +291,10 @@ class RadioPlaybackService : MediaSessionService() {
     } catch (_: Exception) { 5_000 }
 
     private fun playStation(station: RadioStation, queue: List<RadioStation>, queueIndex: Int) {
-        retryCoordinator.cancel()
+        // Keep the retry count: this is also re-entered by retryCurrentStation(),
+        // so resetting here would make maxRetries unreachable. User-initiated
+        // tunes reset the budget via retryCoordinator.cancel() in the play collector.
+        retryCoordinator.cancelPendingRetry()
         stallWatchdog.reset()
         bufferingStartMs = null
         currentStation = station
