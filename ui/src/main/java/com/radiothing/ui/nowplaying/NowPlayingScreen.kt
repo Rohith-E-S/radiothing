@@ -130,6 +130,9 @@ fun NowPlayingScreen(
                     )
                 }
             }
+            // Right counterweight mirroring the 48dp back button — without it
+            // the weight(1f) status column centered ~24dp right of screen center
+            Spacer(Modifier.size(48.dp))
         }
 
         if (uiState.error != null) {
@@ -166,7 +169,13 @@ fun NowPlayingScreen(
                     Spacer(Modifier.height(2.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (uiState.currentStation?.country?.isNotEmpty() == true) {
-                            Text(uiState.currentStation!!.country.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp, maxLines = 1)
+                            Text(
+                                uiState.currentStation!!.country.uppercase(),
+                                color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp,
+                                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                // shrink first — votes/tray stay pinned at natural width
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
                         }
                         if ((uiState.currentStation?.votes ?: 0) > 0) {
                             Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
