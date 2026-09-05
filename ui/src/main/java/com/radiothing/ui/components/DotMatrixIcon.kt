@@ -61,15 +61,13 @@ private fun iconMatrix(type: IconType): List<List<Int>> = when (type) {
             listOf(0, 0, 1, 0, 0),
             listOf(0, 0, 1, 0, 0)
         )
-        // Play — right-pointing triangle in 5x5. Ink spans columns 1-3 so the
-        // glyph is centered on the canvas (column 2); the previous version
-        // spanned columns 2-4 and rendered a full column right of center.
+        // Play — right-pointing triangle in 5x5
         IconType.PLAY -> listOf(
-            listOf(0, 1, 0, 0, 0),
-            listOf(0, 1, 1, 0, 0),
-            listOf(0, 1, 1, 1, 0),
-            listOf(0, 1, 1, 0, 0),
-            listOf(0, 1, 0, 0, 0)
+            listOf(0, 0, 1, 0, 0),
+            listOf(0, 0, 1, 1, 0),
+            listOf(0, 0, 1, 1, 1),
+            listOf(0, 0, 1, 1, 0),
+            listOf(0, 0, 1, 0, 0)
         )
         // Pause — two vertical bars
         IconType.PAUSE -> listOf(
