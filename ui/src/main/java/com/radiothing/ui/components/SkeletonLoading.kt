@@ -71,33 +71,43 @@ private fun SkeletonItem() {
                 .size(52.dp)
                 .background(RadioColors.Border, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
         ) {
-            Text(
-                "∿",
-                modifier = Modifier.align(Alignment.Center),
+            SineWaveGlyph(
                 color = RadioColors.TextTertiary,
-                fontFamily = Ndot57,
-                fontSize = 18.sp
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(26.dp, 12.dp)
             )
         }
 
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            // Title placeholder
-            Text(
-                text = "████████████",
-                color = RadioColors.TextSecondary,
-                fontFamily = Ndot57,
-                fontSize = 16.sp
+            // Title placeholder — drawn bar (block glyphs are missing from
+            // Ndot57 and fell back to the system font)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.72f)
+                    .height(13.dp)
+                    .background(RadioColors.TextSecondary, androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            // Subtitle placeholder
-            Text(
-                text = "▒▒▒▒ ░░░░░░░",
-                color = RadioColors.TextTertiary,
-                fontFamily = Ndot57,
-                fontSize = 12.sp
-            )
+            Spacer(modifier = Modifier.height(6.dp))
+            // Subtitle placeholder — two chunks of fading emphasis
+            Row {
+                Box(
+                    modifier = Modifier
+                        .width(36.dp)
+                        .height(9.dp)
+                        .background(RadioColors.TextTertiary, androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(9.dp)
+                        .alpha(0.55f)
+                        .background(RadioColors.TextTertiary, androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                )
+            }
         }
     }
 }

@@ -81,7 +81,7 @@ fun EmptyState(
                         .border(1.dp, GridLine, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("∿", color = BrightRed, fontFamily = Ndot57, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    com.radiothing.ui.components.SineWaveGlyph(color = BrightRed, modifier = Modifier.size(28.dp, 14.dp), stroke = 3.dp)
                 }
                 Spacer(Modifier.height(14.dp))
                 Text(
