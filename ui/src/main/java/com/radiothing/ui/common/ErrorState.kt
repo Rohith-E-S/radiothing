@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,7 +28,11 @@ fun ErrorState(
     val glitchChars = listOf('░', '▒', '▓', '█')
     var glitchText by remember { mutableStateOf("ERROR") }
 
+    // A permanent 100ms recomposition loop ignores the system-wide
+    // "remove animations" setting — skip the glitch when animations are off
+    val reducedMotion = rememberReducedMotion()
     LaunchedEffect(Unit) {
+        if (reducedMotion) return@LaunchedEffect
         while (true) {
             delay(100)
             if (Random.nextFloat() > 0.8f) {
@@ -47,7 +52,7 @@ fun ErrorState(
     ) {
         Text(
             text = "█▓▒░ $glitchText ░▒▓█",
-            color = Color(0xFFFF2D2D),
+            color = BrightRed,
             fontFamily = Ndot57,
             fontWeight = FontWeight.Bold,
             fontSize = 24.sp,
@@ -58,7 +63,7 @@ fun ErrorState(
         
         Text(
             text = message,
-            color = Color(0xFFFF2D2D),
+            color = BrightRed,
             fontFamily = Ndot57,
             fontSize = 14.sp,
             textAlign = TextAlign.Center
@@ -68,13 +73,13 @@ fun ErrorState(
         
         Box(
             modifier = Modifier
-                .border(BorderStroke(2.dp, Color(0xFFFF2D2D)))
-                .clickable(onClick = onRetry)
+                .border(BorderStroke(2.dp, BrightRed))
+                .clickable(onClickLabel = "Retry", onClick = onRetry)
                 .padding(horizontal = 24.dp, vertical = 12.dp)
         ) {
             Text(
                 text = "[ RETRY ]",
-                color = Color(0xFFFF2D2D),
+                color = BrightRed,
                 fontFamily = Ndot57,
                 fontWeight = FontWeight.Bold
             )

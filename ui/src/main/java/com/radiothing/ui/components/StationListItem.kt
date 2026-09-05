@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import com.radiothing.ui.theme.RadioThingTheme
+import com.radiothing.ui.common.rememberReducedMotion
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.imageLoader
@@ -99,14 +100,10 @@ private fun AudioEqualizerBars(
     // Respect the system-wide "remove animations" setting (Settings → Accessibility
     // → Remove animations). When enabled, skip the infinite transitions and
     // render a static equalizer — saves CPU and avoids vestibular issues.
-    val animatorScale = LocalContext.current.let { ctx ->
-        android.provider.Settings.System.getFloat(
-            ctx.contentResolver,
-            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,
-            1f
-        )
-    }
-    if (animatorScale == 0f) {
+    // rememberReducedMotion caches the read; a raw binder call here would run
+    // on every recomposition of every row.
+    val animatorScaleOff = rememberReducedMotion()
+    if (animatorScaleOff) {
         // Static fallback — slightly varied bar heights so it doesn't look broken
         Row(
             modifier = modifier.height(maxHeight),

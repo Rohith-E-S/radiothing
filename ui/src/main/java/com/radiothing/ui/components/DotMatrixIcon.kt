@@ -3,6 +3,7 @@ package com.radiothing.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -14,15 +15,8 @@ enum class IconType {
     PLAY, PAUSE, PREV, NEXT
 }
 
-@Composable
-fun DotMatrixIcon(
-    type: IconType,
-    size: Dp = 24.dp,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    // 5x5 grid representation for icons
-    val matrix = when (type) {
+
+private fun iconMatrix(type: IconType): List<List<Int>> = when (type) {
         IconType.BROWSE -> listOf(
             listOf(0, 1, 1, 1, 0),
             listOf(1, 0, 0, 0, 1),
@@ -99,8 +93,18 @@ fun DotMatrixIcon(
             listOf(1, 0, 1, 1, 0),
             listOf(1, 0, 1, 0, 0)
         )
-    }
+}
 
+@Composable
+fun DotMatrixIcon(
+    type: IconType,
+    size: Dp = 24.dp,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    // 5x5 grid representation for icons. remember(type) so the matrix lists
+    // are built once per icon, not on every recomposition of every tab.
+    val matrix = remember(type) { iconMatrix(type) }
     Canvas(modifier = modifier.size(size)) {
         val dotRadius = this.size.width / 12f
         val spacing = this.size.width / 5f

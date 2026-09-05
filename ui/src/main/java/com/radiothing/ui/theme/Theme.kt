@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
@@ -38,11 +37,18 @@ fun RadioThingTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = PureBlack.toArgb()
-            window.navigationBarColor = PureBlack.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+            // Unwrap ContextThemeWrapper chains — view.context isn't always an Activity
+            var ctx = view.context
+            while (ctx is android.content.ContextWrapper && ctx !is Activity) {
+                ctx = ctx.baseContext
+            }
+            if (ctx is Activity) {
+                val window = ctx.window
+                // statusBarColor/navigationBarColor are deprecated and ignored on
+                // API 35+; edge-to-edge + the appearance flags cover all versions
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+            }
         }
     }
 
