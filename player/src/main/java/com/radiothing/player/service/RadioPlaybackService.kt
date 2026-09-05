@@ -38,6 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -383,6 +384,12 @@ class RadioPlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        // Cancel the scope first so the command collectors stop immediately:
+        // a zombie collector would consume (and silently drop) play commands
+        // published after destroy, leaving the restarted service with nothing
+        // to play. Commands arriving while the service is dead stay in the
+        // command StateFlows and are picked up on the next onCreate.
+        serviceScope.cancel()
         stopStallWatchdog()
         retryCoordinator.cancel()
         try { nextPreWarmer.cancel() } catch (_: Exception) {}
