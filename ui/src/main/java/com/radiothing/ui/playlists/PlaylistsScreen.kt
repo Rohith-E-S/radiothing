@@ -229,7 +229,7 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
             modifier = Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(100.dp))
-                .clickable(onClick = onDelete),
+                .clickable(onClickLabel = "Delete playlist", onClick = onDelete),
             contentAlignment = Alignment.Center
         ) {
             Icon(

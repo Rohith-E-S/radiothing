@@ -433,7 +433,8 @@ fun NowPlayingScreen(
                 UtilityChip(icon = Icons.Default.Share, label = "SHARE", onClick = {
                     uiState.currentStation?.let { s ->
                         val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "${s.name} - ${s.urlResolved.ifEmpty { s.url }}") }
-                        context.startActivity(Intent.createChooser(send, "Share"))
+                        // No chooser handler is legal on some devices/AOSP builds
+                        runCatching { context.startActivity(Intent.createChooser(send, "Share")) }
                     }
                 })
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
@@ -463,7 +464,7 @@ fun NowPlayingScreen(
                     Text("TRAY EMPTY — TUNE FROM BROWSE", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.heightIn(max = 360.dp)) {
-                        itemsIndexed(uiState.queue, key = { _, s -> s.stationUuid }) { idx, station ->
+                        itemsIndexed(uiState.queue, key = { i, _ -> i }) { idx, station ->
                             val isCurrent = idx == uiState.queueIndex
                             Row(
                                 modifier = Modifier

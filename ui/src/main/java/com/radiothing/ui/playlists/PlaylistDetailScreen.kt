@@ -154,7 +154,7 @@ fun PlaylistDetailScreen(
                                 .align(Alignment.TopEnd)
                                 .size(40.dp)
                                 .clip(RoundedCornerShape(100.dp))
-                                .clickable { viewModel.removeStationFromPlaylist(playlistId, station.stationUuid) },
+                                .clickable(onClickLabel = "Remove from playlist") { viewModel.removeStationFromPlaylist(playlistId, station.stationUuid) },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(

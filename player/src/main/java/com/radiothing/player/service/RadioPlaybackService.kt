@@ -7,9 +7,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.net.wifi.WifiManager
 import android.os.Build
-import android.os.PowerManager
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -62,8 +60,6 @@ class RadioPlaybackService : MediaSessionService() {
     private var currentStation: RadioStation? = null
     /** Station awaiting history recording — cleared once playback starts. */
     private var historyPendingFor: RadioStation? = null
-    private var wifiLock: WifiManager.WifiLock? = null
-    private var powerLock: PowerManager.WakeLock? = null
     private var notificationProvider: DefaultMediaNotificationProvider? = null
 
     @Suppress("unused")
@@ -77,11 +73,6 @@ class RadioPlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-
-        try {
-            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "RadioThing::WifiLock").apply { setReferenceCounted(false) }
-        } catch (_: Exception) {}
 
         retryCoordinator = RetryCoordinator(
             scope = serviceScope,
@@ -162,10 +153,10 @@ class RadioPlaybackService : MediaSessionService() {
                     retryCoordinator.resetCount()
                     stallWatchdog.reset()
                     startStallWatchdog()
-                    acquireWakeLocks()
+                    // Wake/wifi locks are held by ExoPlayer itself via
+                    // setWakeMode(C.WAKE_MODE_LOCAL) — no manual lock needed
                 } else {
                     stopStallWatchdog()
-                    releaseWakeLocks()
                 }
             }
 
@@ -387,24 +378,6 @@ class RadioPlaybackService : MediaSessionService() {
         }
     }
 
-    private fun acquireWakeLocks() {
-        if (powerLock == null) {
-            try {
-                val pm = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
-                powerLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "RadioThing::PlayerWakeLock").apply {
-                    setReferenceCounted(false)
-                }
-            } catch (_: Exception) {}
-        }
-        try { powerLock?.acquire() } catch (_: Exception) {}
-        try { wifiLock?.acquire() } catch (_: Exception) {}
-    }
-
-    private fun releaseWakeLocks() {
-        try { if (powerLock?.isHeld == true) powerLock?.release() } catch (_: Exception) {}
-        try { if (wifiLock?.isHeld == true) wifiLock?.release() } catch (_: Exception) {}
-    }
-
     override fun onDestroy() {
         // Cancel the scope first so the command collectors stop immediately:
         // a zombie collector would consume (and silently drop) play commands
@@ -415,9 +388,6 @@ class RadioPlaybackService : MediaSessionService() {
         historyPendingFor = null
         stopStallWatchdog()
         retryCoordinator.cancel()
-        releaseWakeLocks()
-        powerLock = null
-        wifiLock = null
         mediaSession?.let { session ->
             removeSession(session)
             session.player.release()
