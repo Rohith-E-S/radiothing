@@ -74,4 +74,34 @@ class StationRepositoryImplCatalogCacheTest {
         assertEquals(countries, second.getOrNull())
         coVerify(exactly = 2) { api.getCountries() }
     }
+
+    @Test
+    fun `expired cache with failed refresh serves stale data`() = runTest {
+        coEvery { api.getCountries() } returns countryDtos
+        repository.getCountries()
+
+        fakeNow += 24 * 60 * 60 * 1000L + 1 // beyond TTL
+        coEvery { api.getCountries() } throws RuntimeException("offline")
+
+        val result = repository.getCountries()
+
+        // Stale-but-valid catalog beats an error screen when offline
+        assertEquals(countries, result.getOrNull())
+    }
+
+    @Test
+    fun `stale-served cache is retried on next call after connectivity returns`() = runTest {
+        coEvery { api.getCountries() } returns countryDtos
+        repository.getCountries()
+
+        fakeNow += 24 * 60 * 60 * 1000L + 1
+        coEvery { api.getCountries() } throws RuntimeException("offline") andThen countryDtos
+        repository.getCountries() // serves stale
+
+        fakeNow += 24 * 60 * 60 * 1000L + 1
+        val refreshed = repository.getCountries()
+
+        assertEquals(countries, refreshed.getOrNull())
+        coVerify(exactly = 3) { api.getCountries() }
+    }
 }
