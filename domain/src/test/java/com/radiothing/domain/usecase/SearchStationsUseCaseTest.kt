@@ -101,6 +101,41 @@ class SearchStationsUseCaseTest {
         assertEquals("tag:", query.name)
     }
 
+    @Test
+    fun `parseQuery - quoted multi-word country value stays intact`() {
+        val query = useCase.parseQuery("country:\"united kingdom\" rock")
+        assertEquals("united kingdom", query.country)
+        assertEquals("rock", query.name)
+    }
+
+    @Test
+    fun `parseQuery - quoted value without prefix becomes single name term`() {
+        val query = useCase.parseQuery("\"new york\" jazz")
+        assertEquals("new york jazz", query.name)
+    }
+
+    @Test
+    fun `parseQuery - quoted tag and lang values work`() {
+        val query = useCase.parseQuery("tag:\"hip hop\" lang:\"british english\"")
+        assertEquals("hip hop", query.tag)
+        assertEquals("british english", query.language)
+        assertNull(query.name)
+    }
+
+    @Test
+    fun `parseQuery - unquoted multiword country still splits into name terms`() {
+        // Unquoted behavior unchanged: continuation words are name terms, not the filter value
+        val query = useCase.parseQuery("country:germany jazz")
+        assertEquals("germany", query.country)
+        assertEquals("jazz", query.name)
+    }
+
+    @Test
+    fun `parseQuery - unbalanced quote consumes rest of input`() {
+        val query = useCase.parseQuery("country:\"united kingdom")
+        assertEquals("united kingdom", query.country)
+    }
+
     // --- invoke(query: String) ---
 
     @Test
