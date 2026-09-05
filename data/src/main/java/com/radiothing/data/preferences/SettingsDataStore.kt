@@ -4,10 +4,13 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import com.radiothing.domain.model.AppSettings
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.io.IOException
 import javax.inject.Inject
 
 class SettingsDataStore @Inject constructor(
@@ -21,15 +24,25 @@ class SettingsDataStore @Inject constructor(
         val ENABLE_PRE_WARM = booleanPreferencesKey("enable_pre_warm")
     }
 
-    val settings: Flow<AppSettings> = dataStore.data.map { preferences ->
-        AppSettings(
-            crossfadeDuration = preferences[CROSSFADE_DURATION] ?: 3,
-            useAsciiNotification = preferences[USE_ASCII_NOTIFICATION] ?: false,
-            bufferSize = preferences[BUFFER_SIZE] ?: 5000,
-            enableCache = preferences[ENABLE_CACHE] ?: true,
-            enablePreWarm = preferences[ENABLE_PRE_WARM] ?: false
-        )
-    }
+    /**
+     * A corrupt/unreadable preferences file surfaces as IOException on
+     * dataStore.data — without handling it would kill every collector of this
+     * flow (settings screen, playback service) until app restart. Fall back to
+     * defaults, matching the documented DataStore error strategy.
+     */
+    val settings: Flow<AppSettings> = dataStore.data
+        .catch { e ->
+            if (e is IOException) emit(emptyPreferences()) else throw e
+        }
+        .map { preferences ->
+            AppSettings(
+                crossfadeDuration = preferences[CROSSFADE_DURATION] ?: 3,
+                useAsciiNotification = preferences[USE_ASCII_NOTIFICATION] ?: false,
+                bufferSize = preferences[BUFFER_SIZE] ?: 5000,
+                enableCache = preferences[ENABLE_CACHE] ?: true,
+                enablePreWarm = preferences[ENABLE_PRE_WARM] ?: false
+            )
+        }
 
     suspend fun updateCrossfadeDuration(duration: Int) {
         dataStore.edit { preferences ->
