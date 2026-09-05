@@ -232,6 +232,14 @@ class PlayerManagerImpl @Inject constructor(
         try {
             val intent = Intent(application, RadioPlaybackService::class.java)
             application.startForegroundService(intent)
+        } catch (e: IllegalStateException) {
+            // Android 12+: startForegroundService from the background throws
+            // ForegroundServiceStartNotAllowedException (an IllegalStateException).
+            // Previously swallowed — the command was published with no service to
+            // consume it, leaving the UI buffering forever with no error.
+            _playerState.update {
+                it.copy(error = "PLAYBACK BLOCKED — OPEN APP TO START", isBuffering = false, isPlaying = false)
+            }
         } catch (_: Exception) {}
     }
 }

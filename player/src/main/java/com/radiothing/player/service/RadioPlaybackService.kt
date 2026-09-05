@@ -147,7 +147,18 @@ class RadioPlaybackService : MediaSessionService() {
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 playerManager.onServiceBufferingChanged(playbackState == Player.STATE_BUFFERING)
-                // Do NOT auto-retry on STATE_ENDED — live streams emit it on normal disconnect
+                // A live server closing the connection cleanly drives STATE_ENDED
+                // with no exception — without a retry the player sits in a silent
+                // stopped state while the notification looks intact. The
+                // playWhenReady check excludes user-initiated stops; the retry
+                // budget bounds the loop if the station is really gone.
+                if (playbackState == Player.STATE_ENDED &&
+                    currentStation != null &&
+                    exoPlayer?.playWhenReady == true
+                ) {
+                    playerManager.onServiceBufferingChanged(true)
+                    retryCoordinator.requestRetry("Stream ended")
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
