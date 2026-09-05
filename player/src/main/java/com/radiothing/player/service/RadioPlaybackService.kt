@@ -199,6 +199,17 @@ class RadioPlaybackService : MediaSessionService() {
             setMediaNotificationProvider(provider)
         } catch (_: Exception) {}
 
+        // Drain transient commands left over from a previous service lifetime.
+        // Commands are StateFlows, so freshly launched collectors re-receive
+        // whatever was last published: a stale pause=true would instantly pause
+        // the playback the playCommand collector just started, and a stale
+        // faded volume (mid sleep-timer fade when the service died) would mute
+        // a freshly prepared player. A play command is NOT drained — publishing
+        // one is why the service was started, and it must survive the restart.
+        playerManager.consumePauseCommand()
+        playerManager.consumeResumeCommand()
+        playerManager.consumeVolumeCommand()
+
         serviceScope.launch {
             playerManager.playCommand.collect { cmd ->
                 if (cmd != null) {
