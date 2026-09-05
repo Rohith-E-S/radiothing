@@ -8,16 +8,20 @@ import com.radiothing.domain.model.RadioStation
 import com.radiothing.domain.repository.PlaylistRepository
 import com.radiothing.domain.usecase.ToggleFavoriteUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlaylistsViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
@@ -40,26 +44,34 @@ class PlaylistsViewModel @Inject constructor(
     private val _pendingStation = MutableStateFlow<RadioStation?>(null)
     val pendingStation: StateFlow<RadioStation?> = _pendingStation.asStateFlow()
 
+    /**
+     * Single source for the detail screen: switching the id swaps the upstream
+     * flow via flatMapLatest, so exactly one Room collector is active at a time.
+     * (A collector per loadPlaylist() call leaked: after navigating A → B, any
+     * DB change re-emitted from A's still-live flow and overwrote the screen.)
+     */
+    private val selectedPlaylistId = MutableStateFlow<Long?>(null)
+
     init {
         viewModelScope.launch {
             playlistRepository.getPlaylists().collectLatest { list ->
                 _playlists.value = list
             }
         }
+        viewModelScope.launch {
+            selectedPlaylistId
+                .flatMapLatest { id ->
+                    if (id == null) flowOf(null)
+                    else playlistRepository.getPlaylistWithStations(id)
+                }
+                .collectLatest { data ->
+                    _currentPlaylistDetails.value = data
+                }
+        }
     }
 
     fun loadPlaylist(id: Long) {
-        viewModelScope.launch {
-            try {
-                // Observe playlist with stations; keep collecting into state so detail
-                // screen stays live when stations are added/removed elsewhere
-                playlistRepository.getPlaylistWithStations(id).collectLatest { data ->
-                    _currentPlaylistDetails.value = data
-                }
-            } catch (e: Exception) {
-                _error.value = e.message
-            }
-        }
+        selectedPlaylistId.value = id
     }
 
     fun createPlaylist(name: String) {
