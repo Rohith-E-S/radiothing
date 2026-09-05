@@ -67,6 +67,15 @@ class BrowseViewModel @Inject constructor(
 
     private var lastRequestedOffset = -1
 
+    /**
+     * Monotonic token bumped on every search/filter change. In-flight
+     * `loadMore` calls capture the current token; before merging their
+     * results, they check the token is still current and discard if the
+     * query changed under them. Without this, a filter change mid-scroll
+     * could append a page from the previous order to the new result set.
+     */
+    private var searchToken = 0L
+
     /** Build the server query for the current state (filters + search text). */
     private fun currentServerQuery(state: BrowseUiState, offset: Int, limit: Int): StationQuery {
         val parsed = searchStationsUseCase.parseQuery(state.searchQuery)
@@ -164,7 +173,9 @@ class BrowseViewModel @Inject constructor(
                     ?.sortedByDescending { it.stationCount }
                     ?.map { it.name }
                     ?.let { _countries.value = it }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.w("BrowseViewModel", "loadCatalogs: countries failed", e)
+            }
         }
         viewModelScope.launch {
             try {
@@ -172,7 +183,9 @@ class BrowseViewModel @Inject constructor(
                     ?.sortedByDescending { it.stationCount }
                     ?.map { it.name }
                     ?.let { _tags.value = it }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.w("BrowseViewModel", "loadCatalogs: genres failed", e)
+            }
         }
         viewModelScope.launch {
             try {
@@ -180,7 +193,9 @@ class BrowseViewModel @Inject constructor(
                     ?.sortedByDescending { it.stationCount }
                     ?.map { it.name }
                     ?.let { _languages.value = it }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.w("BrowseViewModel", "loadCatalogs: languages failed", e)
+            }
         }
     }
 
@@ -235,10 +250,12 @@ class BrowseViewModel @Inject constructor(
     }
 
     fun performSearch(refresh: Boolean = false) {
+        searchToken++
         loadTopStations(refresh = refresh)
     }
 
     fun applyFilters(selection: FilterSelection) {
+        searchToken++
         _uiState.value = _uiState.value.copy(filters = selection)
         applyFiltersInternal()
         // Server-side filters change the result set — refetch
@@ -246,6 +263,7 @@ class BrowseViewModel @Inject constructor(
     }
 
     fun clearFilters() {
+        searchToken++
         _uiState.value = _uiState.value.copy(filters = FilterSelection())
         applyFiltersInternal()
         loadTopStations(refresh = true)
@@ -279,6 +297,7 @@ class BrowseViewModel @Inject constructor(
         // guard: this page was already requested (effect can re-fire on recomposition)
         if (nextOffset == lastRequestedOffset) return
         lastRequestedOffset = nextOffset
+        val capturedToken = searchToken
         _uiState.value = state.copy(isLoadingMore = true)
         viewModelScope.launch {
             try {
@@ -288,13 +307,16 @@ class BrowseViewModel @Inject constructor(
                     getTopStationsUseCase.byOrder(state.filters.order, offset = nextOffset, limit = PAGE_SIZE)
                 }
                 val fresh = enrichWithFavorites(result.getOrElse { throw it })
-                val existing = state.unfilteredStations
+                val existing = _uiState.value.unfilteredStations
                 // dedupe by uuid — offload O(n) work from Main (n grows to hundreds, would blow 8ms budget)
                 val (merged, added, canLoadMore) = withContext(Dispatchers.Default) {
                     val seen = existing.map { it.stationUuid }.toSet()
                     val newOnes = fresh.filter { !seen.contains(it.stationUuid) }
                     Triple(existing + newOnes, newOnes, newOnes.isNotEmpty() && fresh.size >= PAGE_SIZE)
                 }
+                // Discard stale results — the user changed the query while we were
+                // fetching, and the result set no longer matches what's on screen.
+                if (searchToken != capturedToken) return@launch
                 _uiState.value = _uiState.value.copy(
                     unfilteredStations = merged,
                     isLoadingMore = false,
@@ -304,6 +326,7 @@ class BrowseViewModel @Inject constructor(
                 prefetchIcons(added)
                 applyFiltersInternal()
             } catch (e: Exception) {
+                if (searchToken != capturedToken) return@launch
                 _uiState.value = _uiState.value.copy(isLoadingMore = false, error = null)
             }
         }
