@@ -72,7 +72,7 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deletePlaylist(playlistId: Long) {
-        dao.deletePlaylist(playlistId)
+        dao.deletePlaylistWithStations(playlistId)
     }
 
     override suspend fun addStationToPlaylist(playlistId: Long, station: RadioStation) {

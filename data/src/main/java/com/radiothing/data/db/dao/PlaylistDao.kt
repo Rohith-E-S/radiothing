@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.radiothing.data.db.entity.PlaylistEntity
 import com.radiothing.data.db.entity.PlaylistStationEntity
@@ -25,6 +26,20 @@ interface PlaylistDao {
 
     @Query("DELETE FROM playlists WHERE id = :playlistId")
     suspend fun deletePlaylist(playlistId: Long)
+
+    @Query("DELETE FROM playlist_stations WHERE playlistId = :playlistId")
+    suspend fun deleteAllPlaylistStations(playlistId: Long)
+
+    /**
+     * Deletes a playlist and its stations atomically. The FK cascade on
+     * playlist_stations also covers this, but the explicit delete keeps the
+     * table clean even if FK enforcement is ever relaxed.
+     */
+    @Transaction
+    suspend fun deletePlaylistWithStations(playlistId: Long) {
+        deleteAllPlaylistStations(playlistId)
+        deletePlaylist(playlistId)
+    }
 
     @Query("SELECT * FROM playlist_stations WHERE playlistId = :playlistId ORDER BY orderIndex ASC")
     fun getPlaylistStations(playlistId: Long): Flow<List<PlaylistStationEntity>>
