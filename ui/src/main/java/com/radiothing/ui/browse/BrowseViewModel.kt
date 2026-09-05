@@ -222,7 +222,7 @@ class BrowseViewModel @Inject constructor(
                 if (offset == 0) lastRequestedOffset = -1
                 _uiState.value = _uiState.value.copy(
                     unfilteredStations = stations, isLoading = false, isRefreshing = false, hasSearched = hasServerTerms(state),
-                    canLoadMore = stations.size >= PAGE_SIZE, currentOffset = stations.size, error = null
+                    canLoadMore = stations.size >= PAGE_SIZE, currentOffset = stations.size, error = null, loadMoreError = null
                 )
                 prefetchIcons(stations)
                 applyFiltersInternal()
@@ -238,10 +238,15 @@ class BrowseViewModel @Inject constructor(
     }
 
     fun refresh() {
+        // Invalidate in-flight load-more: without a token bump its merge passes
+        // the staleness check and can append onto the fresh first page, leaving
+        // currentOffset pointing past a skipped window of the new ordering.
+        searchToken++
         loadTopStations(refresh = true)
     }
 
     fun retry() {
+        searchToken++
         loadTopStations(refresh = true)
     }
 
@@ -321,15 +326,26 @@ class BrowseViewModel @Inject constructor(
                     unfilteredStations = merged,
                     isLoadingMore = false,
                     currentOffset = merged.size,
-                    canLoadMore = canLoadMore
+                    canLoadMore = canLoadMore,
+                    loadMoreError = null
                 )
                 prefetchIcons(added)
                 applyFiltersInternal()
             } catch (e: Exception) {
                 if (searchToken != capturedToken) return@launch
-                _uiState.value = _uiState.value.copy(isLoadingMore = false, error = null)
+                // Surface inline (the loaded list stays visible) and keep
+                // lastRequestedOffset blocking auto-refetch — a scroll parked at
+                // the list end would otherwise retry in a tight loop. The banner's
+                // retry button calls retryLoadMore() explicitly.
+                _uiState.value = _uiState.value.copy(isLoadingMore = false, loadMoreError = friendlyError(e))
             }
         }
+    }
+
+    /** User-driven retry after a failed load-more (see loadMoreError). */
+    fun retryLoadMore() {
+        lastRequestedOffset = -1
+        loadMore()
     }
 
 
@@ -369,6 +385,8 @@ data class BrowseUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: String? = null,
+    /** Failed load-more — shown inline; the loaded list stays visible. */
+    val loadMoreError: String? = null,
     val hasSearched: Boolean = false,
     val canLoadMore: Boolean = true,
     val currentOffset: Int = 0

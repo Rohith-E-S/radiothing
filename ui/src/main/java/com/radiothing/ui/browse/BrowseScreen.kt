@@ -130,22 +130,30 @@ fun BrowseScreen(
                     EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
                 }
                 else -> {
-                    BrowseStationList(
-                        stations = uiState.stations,
-                        canLoadMore = uiState.canLoadMore,
-                        isLoadingMore = uiState.isLoadingMore,
-                        isLoading = uiState.isLoading,
-                        iconReadyState = iconReadyState,
-                        playerStateState = playerStateState,
-                        onLoadMore = viewModel::loadMore,
-                        onStationClick = { uuid ->
-                            viewModel.playStation(uuid)
-                            onStationClick(uuid)
-                        },
-                        onFavoriteClick = { viewModel.toggleFavorite(it) },
-                        pullState = pullState,
-                        canPullRefresh = canPullRefresh
-                    )
+                    Column {
+                        if (uiState.loadMoreError != null) {
+                            LoadMoreErrorBanner(
+                                message = uiState.loadMoreError!!,
+                                onRetry = { viewModel.retryLoadMore() }
+                            )
+                        }
+                        BrowseStationList(
+                            stations = uiState.stations,
+                            canLoadMore = uiState.canLoadMore,
+                            isLoadingMore = uiState.isLoadingMore,
+                            isLoading = uiState.isLoading,
+                            iconReadyState = iconReadyState,
+                            playerStateState = playerStateState,
+                            onLoadMore = viewModel::loadMore,
+                            onStationClick = { uuid ->
+                                viewModel.playStation(uuid)
+                                onStationClick(uuid)
+                            },
+                            onFavoriteClick = { viewModel.toggleFavorite(it) },
+                            pullState = pullState,
+                            canPullRefresh = canPullRefresh
+                        )
+                    }
                 }
             }
         }
@@ -329,6 +337,29 @@ private fun FilterPill(text: String) {
             .border(1.dp, BrightRed, RoundedCornerShape(100.dp))
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) { Text(text, color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold) }
+}
+
+/** Inline load-more failure — the loaded list stays visible; retry is explicit. */
+@Composable
+private fun LoadMoreErrorBanner(message: String, onRetry: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(BrightRed.copy(alpha = 0.12f))
+            .clickable(onClick = onRetry)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "$message — TAP TO RETRY",
+            color = BrightRed,
+            fontFamily = Ndot57,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f, fill = false)
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
