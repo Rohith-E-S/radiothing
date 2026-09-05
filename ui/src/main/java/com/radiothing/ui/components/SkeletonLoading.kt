@@ -37,7 +37,7 @@ fun StationListSkeleton(modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         repeat(6) {
             SkeletonItem()
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }
@@ -57,19 +57,22 @@ private fun SkeletonItem() {
         ),
         label = "skeleton_alpha"
     )
+    // Geometry mirrors StationListItem's real card (12dp corners, 62dp thumb
+    // with 10dp radius, h12/v10 padding, 10dp list gap) so the
+    // loading -> loaded transition doesn't visibly shift the layout.
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(RadioColors.Surface, RadioShapes.Card)
-            .border(1.dp, RadioColors.Border, RadioShapes.Card)
-            .padding(14.dp)
+            .background(RadioColors.Surface, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+            .border(1.dp, RadioColors.Border, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
             .alpha(alpha),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .size(52.dp)
-                .background(RadioColors.Border, androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                .size(62.dp)
+                .background(RadioColors.Border, androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
         ) {
             SineWaveGlyph(
                 color = RadioColors.TextTertiary,
