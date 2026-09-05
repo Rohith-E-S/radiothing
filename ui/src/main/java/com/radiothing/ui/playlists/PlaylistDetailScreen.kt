@@ -127,14 +127,17 @@ fun PlaylistDetailScreen(
                             ps.currentStation?.stationUuid == station.stationUuid && ps.isPlaying
                         }
                     }
-                    val stationClick = androidx.compose.runtime.remember(station.stationUuid, stations) {
+                    // Keyed on the whole station (plus the list): a flow refresh can
+                    // replace the object for the same uuid, and play() must receive
+                    // the fresh instance, not a stale one
+                    val stationClick = androidx.compose.runtime.remember(station, stations) {
                         {
                             val idx = stations.indexOfFirst { it.stationUuid == station.stationUuid }
                             playerManager.play(station, stations, idx.coerceAtLeast(0))
                             onStationClick(station.stationUuid)
                         }
                     }
-                    val favClick = androidx.compose.runtime.remember(station.stationUuid) { { viewModel.toggleFavorite(station) } }
+                    val favClick = androidx.compose.runtime.remember(station) { { viewModel.toggleFavorite(station) } }
                     Box {
                         StationListItem(
                             station = station,

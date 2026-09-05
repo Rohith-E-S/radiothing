@@ -126,7 +126,10 @@ fun FavoritesScreen(
                         }
                     }
                     val stationClick = remember(station.stationUuid) { { viewModel.playStation(station.stationUuid); onStationClick(station.stationUuid) } }
-                    val favClick = remember(station.stationUuid) { { unfavoriteWithUndo(station) } }
+                    // Keyed on the whole station: a flow refresh can replace the
+                    // object for the same uuid (e.g. updated isFavorite), and the
+                    // lambda must not act on the stale instance
+                    val favClick = remember(station) { { unfavoriteWithUndo(station) } }
                     StationListItem(
                         station = station,
                         isPlaying = isPlaying,
