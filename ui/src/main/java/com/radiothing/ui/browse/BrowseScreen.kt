@@ -18,8 +18,10 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
@@ -483,20 +485,34 @@ private fun BrowseStationList(
                 }
             }
         }
-        if (pullState.isRefreshing) {
+        // Visible during the whole pull gesture, not just after release —
+        // previously the drag gave zero feedback until isRefreshing flipped.
+        val pullFraction = if (effectiveCanPull) pullState.progress else 0f
+        if (pullState.isRefreshing || pullFraction > 0f) {
+            val dragging = !pullState.isRefreshing
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 8.dp)
+                    .alpha(if (dragging) (pullFraction * 2f).coerceIn(0f, 1f) else 1f)
+                    .graphicsLayer {
+                        scaleX = if (dragging) 0.7f + 0.3f * pullFraction else 1f
+                        scaleY = if (dragging) 0.7f + 0.3f * pullFraction else 1f
+                    }
                     .clip(RoundedCornerShape(100.dp))
                     .background(Ink)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = BrightRed)
-                    Spacer(Modifier.width(8.dp))
-                    Text("TUNING…", color = TextWhite70, fontFamily = Ndot57, fontSize = 10.sp, letterSpacing = 1.sp)
+                    if (pullState.isRefreshing) {
+                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = BrightRed)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text(
+                        if (dragging) "PULL TO TUNE…" else "TUNING…",
+                        color = TextWhite70, fontFamily = Ndot57, fontSize = 10.sp, letterSpacing = 1.sp
+                    )
                 }
             }
         }
