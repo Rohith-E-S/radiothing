@@ -134,9 +134,11 @@ class MainActivity : ComponentActivity() {
                     route.startsWith("playlist/") && route != "playlist/"
                 } == true
                 val showOverlay = isNowPlayingScreen || isPlaylistDetail
-                // Miniplayer only when actively playing or tuning (buffering) — not when paused/stopped
-                val showMiniPlayer = !showOverlay && playerState.currentStation != null &&
-                    (playerState.isPlaying || playerState.isBuffering)
+                // Miniplayer for any loaded station — paused included. It's the only
+                // entry point to Now Playing and the only visible resume control, so
+                // hiding it on pause left the user with no playback affordance at all.
+                // It hides only when no station is loaded or an overlay screen covers it.
+                val showMiniPlayer = !showOverlay && playerState.currentStation != null
 
                 val pagerState = rememberPagerState(initialPage = 0) { TOP_LEVEL_TABS.size }
                 val scope = rememberCoroutineScope()
