@@ -17,7 +17,6 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -31,7 +30,6 @@ import com.radiothing.player.OffloadState
 import com.radiothing.player.PlayerManager
 import com.radiothing.player.RetryCoordinator
 import com.radiothing.player.StallWatchdog
-import com.radiothing.player.cache.StreamCache
 import com.radiothing.player.datasource.StreamHttpDataSourceFactory
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -56,9 +54,6 @@ class RadioPlaybackService : MediaSessionService() {
 
     @Inject
     lateinit var playerManager: PlayerManager
-
-    @Inject
-    lateinit var streamCache: StreamCache
 
     @Inject
     lateinit var offloadState: OffloadState
@@ -268,21 +263,15 @@ class RadioPlaybackService : MediaSessionService() {
         bufferingStartMs = null
     }
 
+    /**
+     * Live radio is never routed through SimpleCache: cached bytes from a
+     * previous connection are minutes-old audio that CacheDataSource would
+     * serve before splicing to the live edge (the pre-warmer used to guarantee
+     * such a hit). If on-demand content is ever added, caching can return for
+     * those streams only.
+     */
     private fun buildMediaSourceFactory(httpFactory: DefaultHttpDataSource.Factory): ProgressiveMediaSource.Factory {
-        val enableCache = try {
-            kotlinx.coroutines.runBlocking { settingsRepository.getSettings().first().enableCache }
-        } catch (_: Exception) { true }
-        if (!enableCache) return ProgressiveMediaSource.Factory(httpFactory)
-        return try {
-            val cache = streamCache.get()
-            val cacheFactory = CacheDataSource.Factory()
-                .setCache(cache)
-                .setUpstreamDataSourceFactory(httpFactory)
-                .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
-            ProgressiveMediaSource.Factory(cacheFactory)
-        } catch (_: Exception) {
-            ProgressiveMediaSource.Factory(httpFactory)
-        }
+        return ProgressiveMediaSource.Factory(httpFactory)
     }
 
     private fun readBufferSizeSync(): Int = try {
@@ -329,20 +318,10 @@ class RadioPlaybackService : MediaSessionService() {
             recentlyPlayedRepository.addRecentlyPlayed(station)
         }
 
-        // Pre-warm next in queue if opted-in (writes into shared cache)
-        serviceScope.launch {
-            try {
-                val settings = settingsRepository.getSettings().first()
-                if (settings.enablePreWarm && queue.isNotEmpty() && queueIndex + 1 < queue.size) {
-                    val nextStation = queue[queueIndex + 1]
-                    if (nextStation.stationUuid != station.stationUuid) {
-                        nextPreWarmer.warm(nextStation, settings.enableCache)
-                    }
-                } else {
-                    nextPreWarmer.cancel()
-                }
-            } catch (_: Exception) {}
-        }
+        // Pre-warm only made sense when warmed bytes came back out of the shared
+        // cache; playback no longer reads that cache for live streams, so there
+        // is nothing to pre-warm. Any stale warm player is released.
+        nextPreWarmer.cancel()
     }
 
     private fun retryCurrentStation() {
