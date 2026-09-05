@@ -327,7 +327,10 @@ fun StationListItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .height(62.dp),
+                    // min, not fixed: the 48dp favorite touch target + title +
+                    // pill row need ~80dp. A hard 62dp coerced the title to a
+                    // clipped ~14dp and the pill/status row to zero height.
+                    .heightIn(min = 62.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 // Top Row: Slug + Favorite
