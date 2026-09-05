@@ -67,4 +67,65 @@ class RetryCoordinatorTest {
         advanceTimeBy(3000)
         assertEquals(1, retries)
     }
+
+    @Test
+    fun `cancelPendingRetry preserves count so give-up stays reachable`() = runTest {
+        // Simulates the service flow: every retry re-enters playback setup,
+        // which calls cancelPendingRetry() before preparing again.
+        var retries = 0
+        var gaveUp = false
+        var coordinator: RetryCoordinator? = null
+        coordinator = RetryCoordinator(
+            scope = backgroundScope,
+            onRetry = {
+                retries++
+                coordinator?.cancelPendingRetry()
+            },
+            onGiveUp = { gaveUp = true },
+            maxRetries = 3,
+            random = Random(0)
+        )
+        coordinator.requestRetry("e1")
+        advanceTimeBy(3_000)
+        coordinator.requestRetry("e2")
+        advanceTimeBy(5_000)
+        coordinator.requestRetry("e3")
+        advanceTimeBy(9_000)
+        assertEquals(3, retries)
+        // 4th failure after the budget is exhausted must give up, not retry forever
+        coordinator.requestRetry("e4")
+        assertTrue(gaveUp)
+    }
+
+    @Test
+    fun `cancelPendingRetry cancels a scheduled retry`() = runTest {
+        var retries = 0
+        val coordinator = RetryCoordinator(
+            scope = backgroundScope,
+            onRetry = { retries++ },
+            onGiveUp = {},
+            maxRetries = 5,
+            random = Random(0)
+        )
+        coordinator.requestRetry("e1")
+        coordinator.cancelPendingRetry()
+        advanceTimeBy(60_000)
+        assertEquals(0, retries)
+    }
+
+    @Test
+    fun `cancelPendingRetry during onRetry execution does not break the retry`() = runTest {
+        var retries = 0
+        val coordinator = RetryCoordinator(
+            scope = backgroundScope,
+            onRetry = { retries++ },
+            onGiveUp = {},
+            maxRetries = 5,
+            random = Random(0)
+        )
+        coordinator.requestRetry("e1")
+        advanceTimeBy(3_000)
+        assertEquals(1, retries)
+        assertFalse(coordinator.isRetrying())
+    }
 }

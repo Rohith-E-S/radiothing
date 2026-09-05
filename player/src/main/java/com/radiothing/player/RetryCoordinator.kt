@@ -11,7 +11,9 @@ import kotlin.random.Random
  * Uses jittered exponential backoff capped at 30s, max 5 retries then gives up.
  *
  * Both [onPlaybackError] and [onStallDetected] funnel through [requestRetry].
- * Calling [cancel] (e.g. when user manually tunes a new station) clears pending retries.
+ * Calling [cancel] (e.g. when user manually tunes a new station) clears pending
+ * retries and resets the failure count; [cancelPendingRetry] only drops a
+ * scheduled retry and preserves the count so give-up stays reachable.
  */
 class RetryCoordinator(
     private val scope: CoroutineScope,
@@ -36,6 +38,10 @@ class RetryCoordinator(
         retryJob = scope.launch {
             try {
                 delay(delayMs)
+                // Clear before invoking onRetry: the retry re-enters playback setup
+                // which may call cancelPendingRetry — cancelling our own running
+                // job from inside it would be murky. After this, the job is done.
+                retryJob = null
                 onRetry()
             } catch (_: Exception) {
                 // Swallow cancellations / unexpected errors — watchdog will retry again if still stuck
@@ -43,10 +49,25 @@ class RetryCoordinator(
         }
     }
 
+    /**
+     * Full reset: cancels any pending retry and clears the failure count.
+     * Only for user-initiated tuning or teardown — resetting the count on a
+     * retry re-entry would make maxRetries unreachable.
+     */
     fun cancel() {
         retryJob?.cancel()
         retryJob = null
         retryCount = 0
+    }
+
+    /**
+     * Cancels a scheduled retry without resetting the failure count. Used when
+     * a retry re-enters playback setup so consecutive failures keep counting
+     * toward [maxRetries].
+     */
+    fun cancelPendingRetry() {
+        retryJob?.cancel()
+        retryJob = null
     }
 
     fun resetCount() {
