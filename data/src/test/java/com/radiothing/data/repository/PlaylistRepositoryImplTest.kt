@@ -1,5 +1,6 @@
 package com.radiothing.data.repository
 
+import androidx.room.withTransaction
 import com.radiothing.data.db.RadioDatabase
 import com.radiothing.data.db.dao.FavoriteDao
 import com.radiothing.data.db.dao.PlaylistDao
@@ -7,15 +8,20 @@ import com.radiothing.data.db.dao.PlaylistStationCount
 import com.radiothing.data.db.entity.PlaylistEntity
 import com.radiothing.data.db.entity.PlaylistStationEntity
 import com.radiothing.domain.model.RadioStation
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -32,6 +38,18 @@ class PlaylistRepositoryImplTest {
         favoriteDao = mockk(relaxed = true)
         database = mockk(relaxed = true)
         repository = PlaylistRepositoryImpl(dao, favoriteDao, database)
+        // Execute withTransaction blocks directly so repository logic runs in tests
+        mockkStatic("androidx.room.RoomDatabaseKt")
+        coEvery { database.withTransaction(any<suspend () -> Unit>()) } coAnswers {
+            // args[0] is the receiver (the database); args[1] is the block
+            @Suppress("UNCHECKED_CAST")
+            (args[1] as suspend () -> Unit).invoke()
+        }
+    }
+
+    @After
+    fun tearDown() {
+        unmockkAll()
     }
 
     private fun station(uuid: String = "uuid-1") = RadioStation(
@@ -60,6 +78,37 @@ class PlaylistRepositoryImplTest {
 
         coVerify(exactly = 1) { dao.deletePlaylistWithStations(42L) }
         coVerify(exactly = 0) { dao.deletePlaylist(any()) }
+    }
+
+    @Test
+    fun `addStationToPlaylist inserts with orderIndex from count and bumps updatedAt`() = runTest {
+        coEvery { dao.stationExists(1L, "uuid-1") } returns 0
+        coEvery { dao.getStationCount(1L) } returns 3
+
+        repository.addStationToPlaylist(1L, station("uuid-1"))
+
+        val inserted = slot<PlaylistStationEntity>()
+        coVerify(exactly = 1) { dao.insertPlaylistStation(capture(inserted)) }
+        assertEquals(3, inserted.captured.orderIndex)
+        coVerify(exactly = 1) { dao.touchPlaylist(1L, any()) }
+    }
+
+    @Test
+    fun `addStationToPlaylist for existing station does not reinsert or move to end`() = runTest {
+        coEvery { dao.stationExists(1L, "uuid-1") } returns 1
+
+        repository.addStationToPlaylist(1L, station("uuid-1"))
+
+        coVerify(exactly = 0) { dao.insertPlaylistStation(any()) }
+        coVerify(exactly = 1) { dao.touchPlaylist(1L, any()) }
+    }
+
+    @Test
+    fun `removeStationFromPlaylist removes and bumps updatedAt`() = runTest {
+        repository.removeStationFromPlaylist(1L, "uuid-1")
+
+        coVerify(exactly = 1) { dao.removePlaylistStation(1L, "uuid-1") }
+        coVerify(exactly = 1) { dao.touchPlaylist(1L, any()) }
     }
 
     @Test
