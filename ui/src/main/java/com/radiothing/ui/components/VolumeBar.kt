@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,16 +37,22 @@ fun VolumeBar(
     // the parent value changes (so external updates aren't clobbered).
     val segments = 10
 
+    // Latest values via rememberUpdatedState: the pointerInput below must be
+    // keyed on Unit — keying on volume restarts gesture detection on every
+    // drag frame, killing the in-progress drag after a single step.
+    val currentVolume by rememberUpdatedState(volume)
+    val currentOnVolumeChange by rememberUpdatedState(onVolumeChange)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(32.dp)
-            .pointerInput(volume) {
+            .pointerInput(Unit) {
                 detectHorizontalDragGestures { change, dragAmount ->
                     change.consume()
                     val width = size.width.toFloat()
                     val diff = dragAmount / width
-                    onVolumeChange((volume + diff).coerceIn(0f, 1f))
+                    currentOnVolumeChange((currentVolume + diff).coerceIn(0f, 1f))
                 }
             },
         contentAlignment = Alignment.CenterStart
