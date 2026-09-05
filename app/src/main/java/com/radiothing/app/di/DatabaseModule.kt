@@ -23,7 +23,9 @@ object DatabaseModule {
             app,
             RadioDatabase::class.java,
             "radiothing.db"
-        ).build()
+        )
+            .addMigrations(RadioDatabase.MIGRATION_1_2)
+            .build()
     }
 
     @Provides
