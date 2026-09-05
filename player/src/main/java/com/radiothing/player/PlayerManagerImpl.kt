@@ -59,6 +59,10 @@ class PlayerManagerImpl @Inject constructor(
     // --- Internal ---
     private var crossfadeDurationMs = 0L
 
+    /** Whether the service's ExoPlayer is attached and has something prepared. */
+    private var serviceAttached = false
+    private var playedSinceAttach = false
+
     init {
         scope.launch {
             settingsRepository.getSettings().collect { settings ->
@@ -91,6 +95,7 @@ class PlayerManagerImpl @Inject constructor(
     // --- UI → Service: send commands ---
 
     override fun play(station: RadioStation, queue: List<RadioStation>, queueIndex: Int) {
+        playedSinceAttach = true
         _playerState.update {
             it.copy(
                 currentStation = station,
@@ -111,7 +116,15 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun resume() {
         ensureServiceRunning()
-        _resumeCommand.value = true
+        if (serviceAttached && playedSinceAttach) {
+            _resumeCommand.value = true
+        } else {
+            // Service is fresh (never attached this session, or restarted with
+            // nothing prepared) — resume would be a no-op on an empty player.
+            // Replay the current station instead so the visible play button works.
+            val state = _playerState.value
+            state.currentStation?.let { play(it, state.queue, state.queueIndex) }
+        }
     }
 
     override fun stop() {
@@ -191,6 +204,7 @@ class PlayerManagerImpl @Inject constructor(
     // --- Service → Manager: push state back to UI ---
 
     override fun onServicePlayingChanged(isPlaying: Boolean, player: Player?) {
+        if (isPlaying) playedSinceAttach = true
         _playerState.update { it.copy(isPlaying = isPlaying) }
     }
 
@@ -203,10 +217,14 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun attachServicePlayer(player: Player) {
-        // Service is now active — state will come via callbacks
+        serviceAttached = true
+        playedSinceAttach = false
+        // State will come via callbacks
     }
 
     override fun detachServicePlayer() {
+        serviceAttached = false
+        playedSinceAttach = false
         _playerState.update { it.copy(isPlaying = false, isBuffering = false) }
     }
 
