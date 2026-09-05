@@ -37,7 +37,6 @@ interface PlayerManager {
     fun previous()
     fun setVolume(volume: Float)
     fun seekInQueue(index: Int)
-    fun setCrossfadeDuration(seconds: Int)
     fun startSleepTimer(durationMs: Long)
     fun cancelSleepTimer()
     fun release()

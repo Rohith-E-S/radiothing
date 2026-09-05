@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import com.radiothing.ui.theme.Ndot57
@@ -34,6 +36,14 @@ import com.radiothing.ui.theme.TextWhite70
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
     val settings by viewModel.settings.collectAsState(initial = null)
+
+    // Read once per screen entry — accurate even without cross-module plumbing
+    val context = LocalContext.current
+    val appVersion = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
+        } catch (_: Exception) { "?" }
+    }
 
     Column(
         modifier = Modifier
@@ -67,15 +77,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             SettingSectionHeader(title = "PLAYBACK")
             SettingsCard {
                 SettingSlider(
-                    title = "CROSSFADE",
-                    value = appSettings.crossfadeDuration.toFloat(),
-                    range = 0f..10f,
-                    suffix = "s",
-                    steps = 10,
-                    onValueChange = { viewModel.setCrossfadeDuration(it.toInt()) }
-                )
-                HorizontalDivider(color = GridLine)
-                SettingSlider(
                     title = "BUFFER SIZE",
                     value = appSettings.bufferSize.toFloat(),
                     range = 1000f..10000f,
@@ -89,23 +90,6 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     subtitle = "Use block art in notification",
                     checked = appSettings.useAsciiNotification,
                     onCheckedChange = { viewModel.setUseAsciiNotification(it) }
-                )
-                HorizontalDivider(color = GridLine)
-                SettingSwitch(
-                    title = "STREAM CACHE",
-                    subtitle = "Cache recent audio for instant re-tune (64 MB)",
-                    checked = appSettings.enableCache,
-                    onCheckedChange = { viewModel.setEnableCache(it) }
-                )
-            }
-
-            SettingSectionHeader(title = "EXPERIMENTAL")
-            SettingsCard {
-                SettingSwitch(
-                    title = "PRE-WARM NEXT STATION",
-                    subtitle = "Pre-buffer next in queue. Uses extra data.",
-                    checked = appSettings.enablePreWarm,
-                    onCheckedChange = { viewModel.setEnablePreWarm(it) }
                 )
             }
 
@@ -126,7 +110,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text("VERSION", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
-                        Text("1.0.0", color = Color.White, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(appVersion, color = Color.White, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(Modifier.height(10.dp))
                     HorizontalDivider(color = GridLine)

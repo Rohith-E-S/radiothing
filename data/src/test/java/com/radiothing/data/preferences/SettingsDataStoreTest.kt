@@ -33,9 +33,7 @@ class SettingsDataStoreTest {
         val settings = store.settings.first()
 
         assertEquals(AppSettings(), settings)
-        assertEquals(3, settings.crossfadeDuration)
         assertEquals(5000, settings.bufferSize)
-        assertTrue(settings.enableCache)
     }
 
     @Test

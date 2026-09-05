@@ -6,7 +6,6 @@ import androidx.media3.common.Player
 import com.radiothing.domain.model.PlayerState
 import com.radiothing.domain.model.RadioStation
 import com.radiothing.domain.repository.RecentlyPlayedRepository
-import com.radiothing.domain.repository.SettingsRepository
 import com.radiothing.player.service.RadioPlaybackService
 import com.radiothing.player.timer.SleepTimerManager
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +21,6 @@ import javax.inject.Inject
 class PlayerManagerImpl @Inject constructor(
     private val application: Application,
     private val sleepTimerManager: SleepTimerManager,
-    private val settingsRepository: SettingsRepository,
     private val recentlyPlayedRepository: RecentlyPlayedRepository
 ) : PlayerManager {
 
@@ -57,18 +55,12 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     // --- Internal ---
-    private var crossfadeDurationMs = 0L
 
     /** Whether the service's ExoPlayer is attached and has something prepared. */
     private var serviceAttached = false
     private var playedSinceAttach = false
 
     init {
-        scope.launch {
-            settingsRepository.getSettings().collect { settings ->
-                crossfadeDurationMs = settings.crossfadeDuration * 1000L
-            }
-        }
         restoreLastSession()
     }
 
@@ -164,10 +156,6 @@ class PlayerManagerImpl @Inject constructor(
         if (index in state.queue.indices) {
             play(state.queue[index], state.queue, index)
         }
-    }
-
-    override fun setCrossfadeDuration(seconds: Int) {
-        crossfadeDurationMs = seconds * 1000L
     }
 
     override fun startSleepTimer(durationMs: Long) {

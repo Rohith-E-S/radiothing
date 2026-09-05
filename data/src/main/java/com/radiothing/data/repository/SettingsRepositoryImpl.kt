@@ -14,9 +14,6 @@ class SettingsRepositoryImpl @Inject constructor(
         return dataStore.settings
     }
 
-    override suspend fun updateCrossfadeDuration(duration: Int) {
-        dataStore.updateCrossfadeDuration(duration)
-    }
 
     override suspend fun updateUseAsciiNotification(useAscii: Boolean) {
         dataStore.updateUseAsciiNotification(useAscii)
@@ -24,13 +21,5 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun updateBufferSize(size: Int) {
         dataStore.updateBufferSize(size)
-    }
-
-    override suspend fun updateEnableCache(enabled: Boolean) {
-        dataStore.updateEnableCache(enabled)
-    }
-
-    override suspend fun updateEnablePreWarm(enabled: Boolean) {
-        dataStore.updateEnablePreWarm(enabled)
     }
 }
