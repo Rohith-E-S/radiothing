@@ -141,30 +141,33 @@ fun PlaylistDetailScreen(
                         }
                     }
                     val favClick = androidx.compose.runtime.remember(station) { { viewModel.toggleFavorite(station) } }
-                    Box {
-                        StationListItem(
-                            station = station,
-                            isPlaying = isPlaying,
-                            onStationClick = stationClick,
-                            onFavoriteClick = favClick
-                        )
-                        // Remove from tray — trailing X, 48dp touch
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(100.dp))
-                                .clickable(onClickLabel = "Remove from playlist") { viewModel.removeStationFromPlaylist(playlistId, station.stationUuid) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Remove from playlist",
-                                tint = TextWhite35,
-                                modifier = Modifier.size(16.dp)
-                            )
+                    StationListItem(
+                        station = station,
+                        isPlaying = isPlaying,
+                        onStationClick = stationClick,
+                        onFavoriteClick = favClick,
+                        // Own lane inside the card's top row — the old overlay
+                        // Box covered the heart's 48dp touch target and won
+                        // pointer input over most of it
+                        trailingTopContent = {
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(100.dp))
+                                    .clickable(onClickLabel = "Remove from playlist") {
+                                        viewModel.removeStationFromPlaylist(playlistId, station.stationUuid)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Remove from playlist",
+                                    tint = TextWhite35,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
                         }
-                    }
+                    )
                 }
             }
         }

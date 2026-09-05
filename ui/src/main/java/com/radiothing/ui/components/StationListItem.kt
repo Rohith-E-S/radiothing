@@ -289,6 +289,13 @@ fun StationListItem(
     onFavoriteClick: () -> Unit,
     showIcon: Boolean = true,
     compactMode: Boolean = false,
+    /**
+     * Optional extra control rendered in the top row before the heart, in its
+     * own lane. Used by screens that need a second row action (e.g. playlist
+     * detail's remove button) without overlaying it on the heart's touch
+     * target — an overlay won both the pixels and the pointer input.
+     */
+    trailingTopContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val tags = remember(station.tags) {
@@ -361,6 +368,8 @@ fun StationListItem(
                             style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                         )
                     }
+
+                    trailingTopContent?.invoke()
 
                     // 48dp touch target (a11y minimum) wraps a 16dp visual icon.
                     // The parent Row's clickable stays untouched — Compose routes
