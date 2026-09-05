@@ -296,15 +296,15 @@ fun NowPlayingScreen(
 
 
 
-        Spacer(Modifier.height(56.dp))
+        Spacer(Modifier.height(16.dp))
 
         // ── Transport — primary pill, clear hierarchy: Prev / PLAY / Next only
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(100.dp))
-//                .background(Panel)
-//                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .background(Panel)
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .semantics { contentDescription = "Transport controls" }
         ) {
@@ -352,14 +352,14 @@ fun NowPlayingScreen(
             }
         }
 
-        Spacer(Modifier.height(56.dp))
+        Spacer(Modifier.height(16.dp))
 
         // ── Volume — single pill: blocks ARE the slider (tap or slide anywhere on the track)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(100.dp))
-//                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
+                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -367,11 +367,12 @@ fun NowPlayingScreen(
                 Spacer(Modifier.width(10.dp))
                 val blocks = 10
                 val filled = (uiState.volume * blocks).toInt()
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                // Gesture lives on a 44dp+ wrapper; the 14dp visual track alone
+                // was far below the touch minimum and taps near it missed
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(14.dp)
+                        .heightIn(min = 44.dp)
                         .clip(RoundedCornerShape(100.dp))
                         .semantics {
                             contentDescription = "Volume"
@@ -400,22 +401,27 @@ fun NowPlayingScreen(
                                 change.consume()
                             }
                         },
-                    verticalAlignment = Alignment.CenterVertically
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    repeat(blocks) { idx ->
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(10.dp)
-                                .clip(RoundedCornerShape(100.dp))
-                                .background(if (idx < filled) BrightRed else Color(0xFF1A1A1E))
-                        )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(3.dp),
+                        modifier = Modifier.fillMaxWidth().height(14.dp)
+                    ) {
+                        repeat(blocks) { idx ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(10.dp)
+                                    .clip(RoundedCornerShape(100.dp))
+                                    .background(if (idx < filled) BrightRed else Color(0xFF1A1A1E))
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.width(10.dp))
             }
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(14.dp))
 
         // ── Utility — secondary pill, distinct from transport, labelled, not crowded
         Box(
