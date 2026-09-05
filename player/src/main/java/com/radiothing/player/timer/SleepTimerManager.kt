@@ -16,18 +16,32 @@ class SleepTimerManager @Inject constructor() {
     val remainingMs: StateFlow<Long> = _remainingMs.asStateFlow()
 
     private var job: Job? = null
-    private val scope = CoroutineScope(Dispatchers.Default)
+
+    /** Overridable for tests (production: Default dispatcher). */
+    internal var scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 
     // Volume the user had before the fade began — restored when playback stops
-    // so the next play isn't silent.
+    // or the timer is replaced, so the next play isn't silent.
     private var preFadeVolume: Float? = null
 
-    fun start(durationMs: Long, setVolume: (Float) -> Unit, stopPlayback: () -> Unit) {
+    fun start(
+        durationMs: Long,
+        setVolume: (Float) -> Unit,
+        stopPlayback: () -> Unit,
+        /** Live user volume, read when the fade actually begins. */
+        volumeSnapshot: () -> Float
+    ) {
         cancel()
+        // Re-arming mid-fade must undo the old fade first, else the user sits
+        // at near-zero volume until this timer's own fade window begins.
+        consumePreFadeVolume()?.let(setVolume)
+
         _remainingMs.value = durationMs
 
         job = scope.launch {
-            val fadeOutDurationMs = 30_000L
+            // Scale the fade window to the timer — a fixed 30s window made a
+            // 10s timer drop the volume to ~0.3 on its first tick.
+            val fadeOutDurationMs = minOf(30_000L, durationMs)
             var fadeStarted = false
             while (_remainingMs.value > 0) {
                 delay(1000)
@@ -36,8 +50,10 @@ class SleepTimerManager @Inject constructor() {
                 if (_remainingMs.value <= fadeOutDurationMs && _remainingMs.value > 0) {
                     if (!fadeStarted) {
                         fadeStarted = true
-                        // Snapshot only once, before the first fade step
-                        if (preFadeVolume == null) preFadeVolume = currentVolumeSnapshot
+                        // Snapshot at fade start through the provider: fades go
+                        // through the command channel, not the user's volume
+                        // state, so this stays correct even mid-fade.
+                        preFadeVolume = volumeSnapshot()
                     }
                     val volume = _remainingMs.value.toFloat() / fadeOutDurationMs
                     setVolume(max(0f, volume))
@@ -47,9 +63,6 @@ class SleepTimerManager @Inject constructor() {
             stopPlayback()
         }
     }
-
-    /** Latest volume as observed through [setVolume]; set by the owner before fade. */
-    var currentVolumeSnapshot: Float = 1f
 
     /** Restore the pre-fade volume (returns null if no fade ever happened). */
     fun consumePreFadeVolume(): Float? {

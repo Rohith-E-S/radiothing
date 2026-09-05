@@ -171,9 +171,10 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun startSleepTimer(durationMs: Long) {
-        // Snapshot current volume so the fade can be undone later
-        sleepTimerManager.currentVolumeSnapshot = _volume.value
-        sleepTimerManager.start(durationMs, ::fadeVolume) { stop() }
+        // The fade snapshots the live user volume when it begins (fades go
+        // through the command channel, not _volume, so the provider stays
+        // accurate even if the timer is re-armed mid-fade)
+        sleepTimerManager.start(durationMs, ::fadeVolume, { stop() }, volumeSnapshot = { _volume.value })
     }
 
     override fun cancelSleepTimer() {
