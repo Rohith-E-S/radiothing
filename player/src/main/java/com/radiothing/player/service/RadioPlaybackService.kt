@@ -40,6 +40,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -93,8 +94,26 @@ class RadioPlaybackService : MediaSessionService() {
             onGiveUp = { msg -> playerManager.onServiceError(com.radiothing.player.StreamErrorMessages.fromMessage(msg)) }
         )
 
-        val initialBufferSize = readBufferSizeSync()
+        serviceScope.launch { initializePlayer() }
+    }
+
+    /**
+     * Builds the player after an async settings read. onCreate used to
+     * runBlocking on the DataStore-backed settings flow (disk I/O on the main
+     * thread — ANR risk on slow storage). Commands published while settings
+     * load stay in the command StateFlows and are consumed by the collectors
+     * started at the end of this function.
+     */
+    private suspend fun initializePlayer() {
+        val initialBufferSize = try {
+            settingsRepository.getSettings().first().bufferSize
+        } catch (_: Exception) { 5_000 }
         currentBufferSizeMs = initialBufferSize
+        // If the service was destroyed while waiting for settings, bail —
+        // creating the player now would leak it. There are no suspension points
+        // after this check, and onDestroy runs on the same (main) dispatcher,
+        // so it cannot interleave with the remainder of this function.
+        if (!coroutineContext.isActive) return
         val loadControl = LoadControlFactory.from(initialBufferSize)
 
         val audioAttributes = AudioAttributes.Builder()
@@ -295,12 +314,6 @@ class RadioPlaybackService : MediaSessionService() {
     private fun buildMediaSourceFactory(httpFactory: DefaultHttpDataSource.Factory): ProgressiveMediaSource.Factory {
         return ProgressiveMediaSource.Factory(httpFactory)
     }
-
-    private fun readBufferSizeSync(): Int = try {
-        kotlinx.coroutines.runBlocking {
-            settingsRepository.getSettings().first().bufferSize
-        }
-    } catch (_: Exception) { 5_000 }
 
     private fun playStation(station: RadioStation, queue: List<RadioStation>, queueIndex: Int) {
         // Keep the retry count: this is also re-entered by retryCurrentStation(),
