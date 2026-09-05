@@ -67,6 +67,8 @@ class RadioPlaybackService : MediaSessionService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private var currentStation: RadioStation? = null
+    /** Station awaiting history recording — cleared once playback starts. */
+    private var historyPendingFor: RadioStation? = null
     private var wifiLock: WifiManager.WifiLock? = null
     private var powerLock: PowerManager.WakeLock? = null
     private var notificationProvider: DefaultMediaNotificationProvider? = null
@@ -91,7 +93,11 @@ class RadioPlaybackService : MediaSessionService() {
         retryCoordinator = RetryCoordinator(
             scope = serviceScope,
             onRetry = { retryCurrentStation() },
-            onGiveUp = { msg -> playerManager.onServiceError(com.radiothing.player.StreamErrorMessages.fromMessage(msg)) }
+            onGiveUp = { msg ->
+                // The station never reached audible playback — don't record it.
+                historyPendingFor = null
+                playerManager.onServiceError(com.radiothing.player.StreamErrorMessages.fromMessage(msg))
+            }
         )
 
         serviceScope.launch { initializePlayer() }
@@ -154,6 +160,12 @@ class RadioPlaybackService : MediaSessionService() {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 playerManager.onServicePlayingChanged(isPlaying, exoPlayer)
                 if (isPlaying) {
+                    // History records once, on actual audible playback — not on
+                    // every playStation() attempt, which retries re-entered.
+                    historyPendingFor?.let { pending ->
+                        historyPendingFor = null
+                        serviceScope.launch { recentlyPlayedRepository.addRecentlyPlayed(pending) }
+                    }
                     retryCoordinator.resetCount()
                     stallWatchdog.reset()
                     startStallWatchdog()
@@ -240,7 +252,7 @@ class RadioPlaybackService : MediaSessionService() {
                 if (cmd != null) {
                     // User-initiated tune: drop pending retries and start with a fresh budget
                     retryCoordinator.cancel()
-                    playStation(cmd.station, cmd.queue, cmd.queueIndex)
+                    playStation(cmd.station, cmd.queue, cmd.queueIndex, recordHistory = true)
                     playerManager.consumePlayCommand()
                 }
             }
@@ -315,7 +327,7 @@ class RadioPlaybackService : MediaSessionService() {
         return ProgressiveMediaSource.Factory(httpFactory)
     }
 
-    private fun playStation(station: RadioStation, queue: List<RadioStation>, queueIndex: Int) {
+    private fun playStation(station: RadioStation, queue: List<RadioStation>, queueIndex: Int, recordHistory: Boolean) {
         // Keep the retry count: this is also re-entered by retryCurrentStation(),
         // so resetting here would make maxRetries unreachable. User-initiated
         // tunes reset the budget via retryCoordinator.cancel() in the play collector.
@@ -349,9 +361,10 @@ class RadioPlaybackService : MediaSessionService() {
         exoPlayer?.prepare()
         exoPlayer?.playWhenReady = true
 
-        serviceScope.launch {
-            recentlyPlayedRepository.addRecentlyPlayed(station)
-        }
+        // History is recorded once, when playback actually starts (see
+        // onIsPlayingChanged) — recording per attempt made every retry of a
+        // flaky station rewrite/reorder the Recently Played list.
+        if (recordHistory) historyPendingFor = station
 
         // Pre-warm only made sense when warmed bytes came back out of the shared
         // cache; playback no longer reads that cache for live streams, so there
@@ -362,7 +375,7 @@ class RadioPlaybackService : MediaSessionService() {
     private fun retryCurrentStation() {
         val station = currentStation ?: return
         try { nextPreWarmer.cancel() } catch (_: Exception) {}
-        playStation(station, emptyList(), 0)
+        playStation(station, emptyList(), 0, recordHistory = false)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -404,6 +417,7 @@ class RadioPlaybackService : MediaSessionService() {
         // to play. Commands arriving while the service is dead stay in the
         // command StateFlows and are picked up on the next onCreate.
         serviceScope.cancel()
+        historyPendingFor = null
         stopStallWatchdog()
         retryCoordinator.cancel()
         try { nextPreWarmer.cancel() } catch (_: Exception) {}
