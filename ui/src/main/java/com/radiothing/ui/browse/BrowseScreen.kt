@@ -1,6 +1,11 @@
 package com.radiothing.ui.browse
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.State
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -258,7 +263,13 @@ private fun BrowseSearchRow(
 
 @Composable
 private fun BrowseFilterHints(query: String, onClearQuery: () -> Unit) {
-    if (query.isNotEmpty()) {
+    // Animated in/out: a hard if/else made the whole list jump ~24dp the
+    // moment the first character was typed (hint row appeared / spacer shrank).
+    AnimatedVisibility(
+        visible = query.isNotEmpty(),
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -278,8 +289,6 @@ private fun BrowseFilterHints(query: String, onClearQuery: () -> Unit) {
                 Text("CLEAR", color = BrightRed, fontFamily = Ndot57, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
-    } else {
-        Spacer(Modifier.height(6.dp))
     }
 }
 
