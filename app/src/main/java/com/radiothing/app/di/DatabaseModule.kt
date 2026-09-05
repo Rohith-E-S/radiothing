@@ -27,11 +27,14 @@ object DatabaseModule {
     }
 
     @Provides
+    @Singleton
     fun provideFavoriteDao(db: RadioDatabase): FavoriteDao = db.favoriteDao()
 
     @Provides
+    @Singleton
     fun providePlaylistDao(db: RadioDatabase): PlaylistDao = db.playlistDao()
 
     @Provides
+    @Singleton
     fun provideRecentlyPlayedDao(db: RadioDatabase): RecentlyPlayedDao = db.recentlyPlayedDao()
 }
