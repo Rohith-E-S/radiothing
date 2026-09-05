@@ -23,13 +23,15 @@ class HistoryViewModel @Inject constructor(
     private val playerManager: PlayerManager,
     private val stationRepository: com.radiothing.domain.repository.StationRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HistoryUiState())
+    // Start in loading so the screen doesn't flash the empty state before the
+    // first Room emission lands
+    private val _uiState = MutableStateFlow(HistoryUiState(isLoading = true))
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
-    
+
     init {
         viewModelScope.launch {
             getRecentlyPlayedUseCase().collectLatest { history ->
-                _uiState.value = _uiState.value.copy(history = history)
+                _uiState.value = _uiState.value.copy(history = history, isLoading = false)
             }
         }
     }

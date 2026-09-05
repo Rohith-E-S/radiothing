@@ -10,6 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Panel
@@ -67,6 +71,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     value = appSettings.crossfadeDuration.toFloat(),
                     range = 0f..10f,
                     suffix = "s",
+                    steps = 10,
                     onValueChange = { viewModel.setCrossfadeDuration(it.toInt()) }
                 )
                 HorizontalDivider(color = GridLine)
@@ -75,6 +80,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     value = appSettings.bufferSize.toFloat(),
                     range = 1000f..10000f,
                     suffix = "ms",
+                    steps = 9,
                     onValueChange = { viewModel.setBufferSize(it.toInt()) }
                 )
                 HorizontalDivider(color = GridLine)
@@ -223,17 +229,30 @@ fun SettingSlider(
     value: Float,
     range: ClosedFloatingPointRange<Float>,
     suffix: String = "",
+    steps: Int = 0,
     onValueChange: (Float) -> Unit
 ) {
+    // Hold the thumb locally during a drag; persist once on release. Writing
+    // through to the repository on every tick meant dozens of DataStore writes
+    // per gesture and a stuttery thumb (value round-tripping through an async
+    // flow), and a continuous range produced arbitrary values like 3742ms.
+    var dragValue by remember { mutableStateOf<Float?>(null) }
+    val display = dragValue ?: value
+
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = title, color = Color.White, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Text(text = "${value.toInt()}$suffix", color = BrightRed, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = "${display.roundToInt()}$suffix", color = BrightRed, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
         Slider(
-            value = value,
-            onValueChange = onValueChange,
+            value = display.coerceIn(range.start, range.endInclusive),
+            onValueChange = { dragValue = it },
+            onValueChangeFinished = {
+                dragValue?.let(onValueChange)
+                dragValue = null
+            },
             valueRange = range,
+            steps = steps,
             modifier = Modifier.padding(top = 6.dp),
             colors = SliderDefaults.colors(
                 thumbColor = Color.White,
