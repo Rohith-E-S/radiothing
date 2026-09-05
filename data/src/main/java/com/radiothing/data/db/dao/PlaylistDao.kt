@@ -56,6 +56,12 @@ interface PlaylistDao {
     @Query("SELECT COUNT(*) FROM playlist_stations WHERE playlistId = :playlistId")
     suspend fun getStationCount(playlistId: Long): Int
 
+    @Query("SELECT EXISTS(SELECT 1 FROM playlist_stations WHERE playlistId = :playlistId AND stationUuid = :stationUuid)")
+    suspend fun stationExists(playlistId: Long, stationUuid: String): Int
+
+    @Query("UPDATE playlists SET updatedAt = :timestamp WHERE id = :playlistId")
+    suspend fun touchPlaylist(playlistId: Long, timestamp: Long)
+
     @Query("SELECT playlistId, COUNT(*) as stationCount FROM playlist_stations GROUP BY playlistId")
     fun getPlaylistStationCounts(): Flow<List<PlaylistStationCount>>
 }

@@ -76,33 +76,44 @@ class PlaylistRepositoryImpl @Inject constructor(
     }
 
     override suspend fun addStationToPlaylist(playlistId: Long, station: RadioStation) {
-        val currentCount = dao.getStationCount(playlistId)
-        dao.insertPlaylistStation(
-            PlaylistStationEntity(
-                playlistId = playlistId,
-                stationUuid = station.stationUuid,
-                name = station.name,
-                url = station.url,
-                urlResolved = station.urlResolved,
-                homepage = station.homepage,
-                favicon = station.favicon,
-                tags = station.tags,
-                country = station.country,
-                countryCode = station.countryCode,
-                language = station.language,
-                codec = station.codec,
-                bitrate = station.bitrate,
-                votes = station.votes,
-                clickCount = station.clickCount,
-                clickTrend = station.clickTrend,
-                lastCheckOk = station.lastCheckOk,
-                orderIndex = currentCount
-            )
-        )
+        database.withTransaction {
+            // Re-adding an existing station is a no-op for the row: REPLACE on
+            // the (playlistId, stationUuid) key would delete + reinsert and
+            // silently move the station to the end of the playlist.
+            if (dao.stationExists(playlistId, station.stationUuid) == 0) {
+                val orderIndex = dao.getStationCount(playlistId)
+                dao.insertPlaylistStation(
+                    PlaylistStationEntity(
+                        playlistId = playlistId,
+                        stationUuid = station.stationUuid,
+                        name = station.name,
+                        url = station.url,
+                        urlResolved = station.urlResolved,
+                        homepage = station.homepage,
+                        favicon = station.favicon,
+                        tags = station.tags,
+                        country = station.country,
+                        countryCode = station.countryCode,
+                        language = station.language,
+                        codec = station.codec,
+                        bitrate = station.bitrate,
+                        votes = station.votes,
+                        clickCount = station.clickCount,
+                        clickTrend = station.clickTrend,
+                        lastCheckOk = station.lastCheckOk,
+                        orderIndex = orderIndex
+                    )
+                )
+            }
+            dao.touchPlaylist(playlistId, System.currentTimeMillis())
+        }
     }
 
     override suspend fun removeStationFromPlaylist(playlistId: Long, stationUuid: String) {
-        dao.removePlaylistStation(playlistId, stationUuid)
+        database.withTransaction {
+            dao.removePlaylistStation(playlistId, stationUuid)
+            dao.touchPlaylist(playlistId, System.currentTimeMillis())
+        }
     }
 
     override suspend fun reorderStations(playlistId: Long, stationUuids: List<String>) {
@@ -110,6 +121,7 @@ class PlaylistRepositoryImpl @Inject constructor(
             stationUuids.forEachIndexed { index, uuid ->
                 dao.updateStationOrder(playlistId, uuid, index)
             }
+            dao.touchPlaylist(playlistId, System.currentTimeMillis())
         }
     }
 }
