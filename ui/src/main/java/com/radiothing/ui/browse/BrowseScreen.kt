@@ -361,7 +361,10 @@ private fun BrowseStationList(
     }
 
     // Pagination — derivedState samples layoutInfo without emitting on every frame.
-    val shouldLoadMore by remember {
+    // Keyed on the list-state values the predicate reads: an unkeyed remember
+    // captures the first composition's values, so load-more could never fire when
+    // the first page fit (canLoadMore started false) or fired against a stale total.
+    val shouldLoadMore by remember(stations, canLoadMore, isLoadingMore, isLoading) {
         derivedStateOf {
             val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
             val total = stations.size
