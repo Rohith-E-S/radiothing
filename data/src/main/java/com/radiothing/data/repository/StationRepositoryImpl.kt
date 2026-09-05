@@ -18,6 +18,12 @@ class StationRepositoryImpl @Inject constructor(
     /** Cached catalog entry with a fetch timestamp for TTL expiry. */
     private data class CachedEntry<T>(val value: T, val fetchedAtMs: Long)
 
+    /**
+     * Serve-stale-while-revalidate: within TTL returns the cache as-is; past
+     * TTL tries to refresh, and if the refresh fails but a previous entry
+     * exists, serves the stale entry instead of failing — the catalogs are
+     * static enough that day-old data beats an error screen when offline.
+     */
     private suspend fun <T> cached(
         cache: CachedEntry<T>?,
         ttlMs: Long = CATALOG_CACHE_TTL_MS,
@@ -31,7 +37,9 @@ class StationRepositoryImpl @Inject constructor(
             val value = fetch()
             Result.success(value) to CachedEntry(value, now)
         } catch (e: Exception) {
-            Result.failure<T>(e) to null
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (cache != null) Result.success(cache.value) to cache
+            else Result.failure<T>(e) to null
         }
     }
 
