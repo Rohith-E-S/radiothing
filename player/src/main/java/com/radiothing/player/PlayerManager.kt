@@ -7,7 +7,17 @@ import kotlinx.coroutines.flow.StateFlow
 
 data class PlayCommand(val station: RadioStation, val queue: List<RadioStation>, val queueIndex: Int)
 
+/**
+ * Single source of truth for playback state and the command bus between
+ * UI and [com.radiothing.player.service.RadioPlaybackService].
+ *
+ * UI calls [play]/[pause]/[next]/… which publish onto the command flows;
+ * the service observes them, drives ExoPlayer, and pushes real state back
+ * via the [onService*] callbacks. Survives process death via
+ * [restoreLastSession].
+ */
 interface PlayerManager {
+    /** Observable playback state for UI (station, playing, buffering, queue, errors). */
     val playerState: StateFlow<PlayerState>
     val volume: StateFlow<Float>
     val sleepTimerRemaining: StateFlow<Long>
