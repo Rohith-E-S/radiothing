@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.domain.model.RadioStation
 import com.radiothing.player.PlayerManager
+import com.radiothing.ui.components.StationListSkeleton
 import com.radiothing.ui.components.DotMatrixIcon
 import com.radiothing.ui.components.IconType
 import com.radiothing.ui.components.StationListItem
@@ -113,10 +114,12 @@ fun PlaylistDetailScreen(
         Spacer(Modifier.height(8.dp))
 
         val stations = details?.stations ?: emptyList()
-        if (stations.isEmpty()) {
-            EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
-        } else {
-            LazyColumn(
+        when {
+            // details == null means the flow hasn't emitted yet — show a loading
+            // skeleton, not a misleading "empty playlist" state
+            details == null -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = 100.dp))
+            stations.isEmpty() -> EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
+            else -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
             ) {

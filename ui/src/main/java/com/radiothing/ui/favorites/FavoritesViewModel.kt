@@ -22,13 +22,15 @@ class FavoritesViewModel @Inject constructor(
     private val stationRepository: com.radiothing.domain.repository.StationRepository,
     private val playerManager: PlayerManager
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(FavoritesUiState())
+    // Start in loading so the screen doesn't flash the empty state before the
+    // first Room emission lands
+    private val _uiState = MutableStateFlow(FavoritesUiState(isLoading = true))
     val uiState: StateFlow<FavoritesUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             getFavoritesUseCase().collectLatest { favorites ->
-                _uiState.value = _uiState.value.copy(favorites = favorites)
+                _uiState.value = _uiState.value.copy(favorites = favorites, isLoading = false)
             }
         }
     }

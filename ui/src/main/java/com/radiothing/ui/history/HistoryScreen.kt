@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.radiothing.ui.common.EmptyState
 import com.radiothing.ui.common.EmptyStateType
 import com.radiothing.ui.components.StationListItem
+import com.radiothing.ui.components.StationListSkeleton
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Panel
@@ -92,10 +93,12 @@ fun HistoryScreen(
             HorizontalDivider(color = GridLine, thickness = 1.dp)
             Spacer(Modifier.height(12.dp))
 
-            if (uiState.history.isEmpty()) {
-                EmptyState(type = EmptyStateType.NO_HISTORY, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
-            } else {
-                LazyColumn(
+            when {
+                // Loading skeleton until the first Room emission — an empty list
+                // before that is "not loaded yet", not "no history"
+                uiState.isLoading -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = 100.dp))
+                uiState.history.isEmpty() -> EmptyState(type = EmptyStateType.NO_HISTORY, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
+                else -> LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
                 ) {
