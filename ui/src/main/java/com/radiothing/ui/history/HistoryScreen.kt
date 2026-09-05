@@ -107,7 +107,10 @@ fun HistoryScreen(
                             }
                         }
                         val stationClick = remember(station.stationUuid) { { viewModel.playStation(station.stationUuid); onStationClick(station.stationUuid) } }
-                        val favClick = remember(station.stationUuid) { { viewModel.toggleFavorite(station) } }
+                        // Keyed on the whole station: the history flow can replace
+                        // the object for the same uuid, and the lambda must not
+                        // act on a stale instance
+                        val favClick = remember(station) { { viewModel.toggleFavorite(station) } }
                         StationListItem(
                             station = station,
                             isPlaying = isPlaying,
