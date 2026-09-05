@@ -24,6 +24,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
+import com.radiothing.ui.theme.RadioThingTheme
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.imageLoader
@@ -88,6 +90,37 @@ private fun AudioEqualizerBars(
                         .fillMaxHeight(0.2f)
                         .clip(RoundedCornerShape(0.5.dp))
                         .background(TextWhite35.copy(alpha = 0.4f))
+                )
+            }
+        }
+        return
+    }
+
+    // Respect the system-wide "remove animations" setting (Settings → Accessibility
+    // → Remove animations). When enabled, skip the infinite transitions and
+    // render a static equalizer — saves CPU and avoids vestibular issues.
+    val animatorScale = LocalContext.current.let { ctx ->
+        android.provider.Settings.System.getFloat(
+            ctx.contentResolver,
+            android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,
+            1f
+        )
+    }
+    if (animatorScale == 0f) {
+        // Static fallback — slightly varied bar heights so it doesn't look broken
+        Row(
+            modifier = modifier.height(maxHeight),
+            horizontalArrangement = Arrangement.spacedBy(1.5.dp),
+            verticalAlignment = Alignment.Bottom
+        ) {
+            val staticHeights = floatArrayOf(0.6f, 0.4f, 0.75f, 0.5f)
+            repeat(barCount) { i ->
+                Box(
+                    modifier = Modifier
+                        .width(barWidth)
+                        .fillMaxHeight(staticHeights[i % staticHeights.size])
+                        .clip(RoundedCornerShape(0.5.dp))
+                        .background(BrightRed)
                 )
             }
         }
@@ -332,9 +365,13 @@ fun StationListItem(
                         )
                     }
 
+                    // 48dp touch target (a11y minimum) wraps a 16dp visual icon.
+                    // The parent Row's clickable stays untouched — Compose routes
+                    // touches to the deepest clickable, so the row click won't fire
+                    // when the user taps the heart.
                     Box(
                         modifier = Modifier
-                            .size(24.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
                             .semantics {
                                 contentDescription = if (station.isFavorite) "Remove from favorites" else "Add to favorites"
@@ -387,40 +424,41 @@ fun StationListItem(
                     Spacer(Modifier.width(10.dp))
 
                     // Right: Status
-                    if (compactMode) {
+                    val statusRow: @Composable () -> Unit = {
+                        Text(
+                            text = if (isPlaying) "ON AIR" else "STANDBY",
+                            color = if (isPlaying) BrightRed else TextWhite35,
+                            fontFamily = Ndot57,
+                            fontSize = 7.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.4.sp,
+                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                        )
                         Text(
                             text = votesLabel,
                             color = TextWhite70,
                             fontFamily = Ndot57,
-                            fontSize = 9.5.sp,
+                            fontSize = 8.5.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.1.sp,
                             style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
                         )
+                    }
+                    if (compactMode) {
+                        // Browse list — keep just the status + votes, drop the animated bars
+                        // (rows are dense and 120Hz bars across 20 visible rows eat frame budget)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) { statusRow() }
                     } else {
+                        // Favorites/History — equalizer bars make sense (fewer rows, scene-driven)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             AudioEqualizerBars(isPlaying = isPlaying, barCount = 4, barWidth = 2.dp, maxHeight = 10.dp)
-                            Text(
-                                text = if (isPlaying) "ON AIR" else "STANDBY",
-                                color = if (isPlaying) BrightRed else TextWhite35,
-                                fontFamily = Ndot57,
-                                fontSize = 7.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.4.sp,
-                                style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                            )
-                            Text(
-                                text = votesLabel,
-                                color = TextWhite70,
-                                fontFamily = Ndot57,
-                                fontSize = 8.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.1.sp,
-                                style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                            )
+                            statusRow()
                         }
                     }
                 }
@@ -428,3 +466,65 @@ fun StationListItem(
         }
     }
 }
+
+// region Previews
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L)
+@Composable
+private fun StationListItemIdlePreview() {
+    RadioThingTheme {
+        StationListItem(
+            station = previewStation(),
+            isPlaying = false,
+            onStationClick = {},
+            onFavoriteClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L)
+@Composable
+private fun StationListItemPlayingPreview() {
+    RadioThingTheme {
+        StationListItem(
+            station = previewStation().copy(name = "Soma FM Drone Zone", votes = 10432),
+            isPlaying = true,
+            onStationClick = {},
+            onFavoriteClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L)
+@Composable
+private fun StationListItemFavoritedPreview() {
+    RadioThingTheme {
+        StationListItem(
+            station = previewStation().copy(isFavorite = true),
+            isPlaying = false,
+            onStationClick = {},
+            onFavoriteClick = {}
+        )
+    }
+}
+
+private fun previewStation() = RadioStation(
+    stationUuid = "preview-uuid",
+    name = "Radio Paradise",
+    url = "https://example.com/stream",
+    urlResolved = "https://example.com/stream",
+    homepage = "",
+    favicon = "",
+    tags = "eclectic, rock",
+    country = "Germany",
+    countryCode = "DE",
+    language = "english",
+    codec = "MP3",
+    bitrate = 128,
+    votes = 5231,
+    clickCount = 100,
+    clickTrend = 2,
+    lastCheckOk = true
+)
+
+// endregion

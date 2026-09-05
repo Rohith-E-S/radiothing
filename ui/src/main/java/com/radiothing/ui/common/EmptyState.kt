@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import com.radiothing.ui.theme.RadioThingTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -110,6 +112,17 @@ fun EmptyState(
                     textAlign = TextAlign.Center
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L)
+@Composable
+private fun EmptyStatePreviews() {
+    RadioThingTheme {
+        Column {
+            EmptyState(type = EmptyStateType.NO_RESULTS)
+            EmptyState(type = EmptyStateType.NO_FAVORITES)
         }
     }
 }
