@@ -49,8 +49,13 @@ fun MiniPlayer(
     onPrevious: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Visibility is keyed on the loaded station only — NOT on isPlaying.
+    // The host (MainActivity) already composes this only when a station is
+    // loaded and no overlay screen covers it, so gating on playback state
+    // here would slide the player (the only resume affordance) off-screen
+    // the moment the user pauses.
     AnimatedVisibility(
-        visible = playerState.currentStation != null && (playerState.isPlaying || playerState.isBuffering),
+        visible = playerState.currentStation != null,
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it }),
         modifier = modifier
