@@ -26,6 +26,7 @@ import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Ndot57
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.common.LocalBottomClearance
 import kotlinx.coroutines.launch
 
 @Composable
@@ -115,11 +116,11 @@ fun FavoritesScreen(
         when {
             // Loading skeleton until the first Room emission — an empty list
             // before that is "not loaded yet", not "no favorites"
-            uiState.isLoading -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = 100.dp))
-            uiState.favorites.isEmpty() -> EmptyState(type = EmptyStateType.NO_FAVORITES, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
+            uiState.isLoading -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
+            uiState.favorites.isEmpty() -> EmptyState(type = EmptyStateType.NO_FAVORITES, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
             else -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
+                contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 4.dp)
             ) {
                 items(uiState.favorites, key = { it.stationUuid }, contentType = { "station" }) { station ->
                     val isPlaying by remember(station.stationUuid) {
@@ -147,7 +148,7 @@ fun FavoritesScreen(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 88.dp)
+                .padding(bottom = LocalBottomClearance.current + 12.dp)
         )
     }
 }

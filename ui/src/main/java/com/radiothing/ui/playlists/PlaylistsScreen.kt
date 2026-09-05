@@ -31,6 +31,7 @@ import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.common.LocalBottomClearance
 
 @Composable
 fun PlaylistsScreen(
@@ -82,11 +83,11 @@ fun PlaylistsScreen(
         Spacer(Modifier.height(12.dp))
 
         if (playlists.isEmpty()) {
-            EmptyState(type = EmptyStateType.NO_PLAYLISTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
+            EmptyState(type = EmptyStateType.NO_PLAYLISTS, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
         } else {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
+                contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 4.dp)
             ) {
                 items(playlists, key = { it.id }) { playlist ->
                     PlaylistItem(
