@@ -1,7 +1,7 @@
 package com.radiothing.app.di
 
+import com.radiothing.app.BuildConfig
 import com.radiothing.data.api.RadioBrowserApi
-import com.radiothing.data.api.ServerResolver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,15 +19,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideServerResolver(): ServerResolver {
-        return ServerResolver()
-    }
-
-    @Provides
-    @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
+            // URLs include query params — don't log them in release builds
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
         }
         val fallbackUrls = listOf(
             "https://de1.api.radio-browser.info/",
