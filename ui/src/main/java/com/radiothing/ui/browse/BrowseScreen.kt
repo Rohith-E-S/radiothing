@@ -56,6 +56,7 @@ import com.radiothing.ui.theme.Ndot57
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.common.LocalBottomClearance
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -134,7 +135,7 @@ fun BrowseScreen(
                     ErrorState(message = uiState.error ?: "Unknown error", onRetry = { viewModel.retry() })
                 }
                 uiState.stations.isEmpty() -> {
-                    EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
+                    EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
                 }
                 else -> {
                     Column {
@@ -433,7 +434,7 @@ private fun BrowseStationList(
         LazyColumn(
             state = listState,
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
+            contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 4.dp)
         ) {
             items(
                 stations,

@@ -37,6 +37,7 @@ import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Ndot57
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.common.LocalBottomClearance
 
 @Composable
 fun PlaylistDetailScreen(
@@ -117,11 +118,11 @@ fun PlaylistDetailScreen(
         when {
             // details == null means the flow hasn't emitted yet — show a loading
             // skeleton, not a misleading "empty playlist" state
-            details == null -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = 100.dp))
-            stations.isEmpty() -> EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = 100.dp))
+            details == null -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
+            stations.isEmpty() -> EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
             else -> LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(bottom = 140.dp, top = 4.dp)
+                contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 4.dp)
             ) {
                 itemsIndexed(stations, key = { _, s -> s.stationUuid }, contentType = { _, _ -> "station" }) { _, station ->
                     val isPlaying by androidx.compose.runtime.remember(station.stationUuid) {

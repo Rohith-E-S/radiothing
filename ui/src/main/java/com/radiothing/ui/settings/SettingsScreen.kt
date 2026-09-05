@@ -32,6 +32,7 @@ import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.common.LocalBottomClearance
 
 @Composable
 fun SettingsScreen(viewModel: SettingsViewModel) {
@@ -141,7 +142,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                 modifier = Modifier.fillMaxWidth()
             )
             // Clear the floating dock so last setting isn't obscured
-            Spacer(Modifier.height(140.dp))
+            Spacer(Modifier.height(LocalBottomClearance.current))
         }
     }
 }

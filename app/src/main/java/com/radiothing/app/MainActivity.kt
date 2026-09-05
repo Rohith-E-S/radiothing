@@ -25,13 +25,16 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -53,6 +56,7 @@ import com.radiothing.ui.navigation.RadioNavHost
 import com.radiothing.ui.navigation.Screen
 import com.radiothing.ui.navigation.TOP_LEVEL_TABS
 import com.radiothing.ui.navigation.TabPager
+import com.radiothing.ui.common.LocalBottomClearance
 import com.radiothing.ui.theme.RadioThingTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -167,11 +171,23 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // Real clearance for list content behind the floating dock:
+                // nav-bar inset + dock pill (76dp) + MiniPlayer (~70dp when
+                // visible). Overlay routes hide the dock, so only a small
+                // bottom breathing room is needed.
+                val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                val bottomClearance = if (showOverlay) {
+                    navBarInset + 24.dp
+                } else {
+                    navBarInset + 76.dp + (if (showMiniPlayer) 70.dp else 0.dp)
+                }
+
                 Scaffold(
                     contentWindowInsets = WindowInsets(0, 0, 0, 0),
                     snackbarHost = { SnackbarHost(snackbarHostState) },
                     containerColor = com.radiothing.ui.theme.PureBlack
                 ) { innerPadding ->
+                    CompositionLocalProvider(LocalBottomClearance provides bottomClearance) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         // Floating dock: TabPager renders full-screen behind the dock so content
                         // shows through the translucent pills. Lists provide their own
@@ -234,6 +250,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                    }
                     }
                 }
             }
