@@ -162,7 +162,7 @@ fun MiniPlayer(
                     // Prev — compact skip-back, mirrors the Next enclosure button
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(48.dp)
                             .clip(RoundedCornerShape(100.dp))
                             .background(Color.Transparent)
                             .border(1.dp, GridLine, RoundedCornerShape(100.dp))
@@ -180,7 +180,7 @@ fun MiniPlayer(
                     // Next — compact skip, keeps bad streams one tap away
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(48.dp)
                             .clip(RoundedCornerShape(100.dp))
                             .background(Color.Transparent)
                             .border(1.dp, GridLine, RoundedCornerShape(100.dp))
@@ -199,7 +199,7 @@ fun MiniPlayer(
                 // Play/Pause — enclosure button
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(BrightRed)
                         .clickable(onClick = onPlayPauseClick),
