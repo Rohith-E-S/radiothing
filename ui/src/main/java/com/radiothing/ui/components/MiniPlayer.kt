@@ -61,6 +61,8 @@ fun MiniPlayer(
                 .semantics { contentDescription = "Mini player, tap to expand, swipe up" }
                 .padding(horizontal = 0.dp, vertical = 0.dp)
         ) {
+            // Read inside the gesture below without restarting pointerInput
+            val currentOnExpand by rememberUpdatedState(onExpandClick)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -68,10 +70,21 @@ fun MiniPlayer(
                     .background(Panel)
                     .border(1.dp, if (playerState.isPlaying) BrightRed.copy(alpha = 0.45f) else GridLine.copy(alpha = 0.6f), RoundedCornerShape(28.dp))
                     .pointerInput(Unit) {
-                        detectVerticalDragGestures { change, dragAmount ->
-                            change.consume()
-                            if (dragAmount < -20) onExpandClick()
-                        }
+                        // Accumulate the drag across the whole gesture and expand
+                        // once on release: per-event deltas (<-20) fired on every
+                        // frame of a fast fling (multiple navigations per gesture)
+                        // and never on a slow deliberate drag.
+                        var accumulatedDrag = 0f
+                        detectVerticalDragGestures(
+                            onDragStart = { accumulatedDrag = 0f },
+                            onVerticalDrag = { change, dragAmount ->
+                                change.consume()
+                                accumulatedDrag += dragAmount
+                            },
+                            onDragEnd = {
+                                if (accumulatedDrag < -40) currentOnExpand()
+                            }
+                        )
                     }
                     .clickable(onClick = onExpandClick)
                     .padding(horizontal = 14.dp, vertical = 10.dp),
