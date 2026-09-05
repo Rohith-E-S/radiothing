@@ -75,6 +75,8 @@ fun RadioNavHost(
                 playerManager = playerManager,
                 onBackClick = { navController.popBackStack() },
                 onStationClick = {
+                    // Reuse the NowPlaying destination if it's already on the back stack
+                    // (e.g., user was in NowPlaying → went to a playlist → tapped a station)
                     navController.navigate(Screen.NowPlaying.route) { launchSingleTop = true }
                 }
             )

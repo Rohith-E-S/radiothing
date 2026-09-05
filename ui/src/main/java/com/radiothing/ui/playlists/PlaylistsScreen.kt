@@ -128,7 +128,15 @@ fun PlaylistsScreen(
                         enabled = newName.isNotBlank()
                     ) { Text("CREATE", fontFamily = Ndot57, fontWeight = FontWeight.Bold, color = BrightRed) }
                 },
-                dismissButton = { TextButton(onClick = { showCreate = false }) { Text("CANCEL", fontFamily = Ndot57) } },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            // Reset on cancel so the next open starts fresh
+                            newName = ""
+                            showCreate = false
+                        }
+                    ) { Text("CANCEL", fontFamily = Ndot57) }
+                },
                 containerColor = Panel,
                 titleContentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)

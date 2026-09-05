@@ -149,7 +149,6 @@ fun BottomNavBar(
                             .semantics {
                                 selected = isSelected
                                 contentDescription = item.label
-                                role = Role.Tab
                             }
                             .padding(vertical = 6.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,

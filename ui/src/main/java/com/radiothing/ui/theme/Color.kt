@@ -19,8 +19,6 @@ val TextWhite70 = Color(0xB3FFFFFF)
 val TextWhite45 = Color(0x73FFFFFF)
 val TextWhite35 = Color(0x59FFFFFF)
 val TextWhite40 = Color(0x66FFFFFF)
-val DarkGray = Color(0xFF121214)
-val BorderGray = Color(0xFF232326)
 
 object RadioColors {
     val Background = PureBlack

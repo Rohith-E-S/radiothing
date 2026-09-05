@@ -15,9 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import kotlin.math.pow
-import kotlinx.coroutines.delay
 
 /**
  * Real stream-driven visuals. Oscilloscope (waveform) + dotted equalizer (FFT).
@@ -40,10 +42,32 @@ fun StreamDotEqualizer(
     var hasPermission by remember {
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
     }
+    // Re-check permission when (a) the user toggles play/pause (the prompt fires
+    // from the screen the first time), or (b) we come back to the foreground
+    // after the system dialog was dismissed. Polling the permission every 2s
+    // when playing catches both, but the previous version used `while (true)`
+    // which never terminated — we now read the permission once per [isPlaying]
+    // change and once per [ON_RESUME] lifecycle event.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasPermission = ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    // Belt-and-braces: also re-check when isPlaying flips true (catches the
+    // case where the user granted permission, the prompt was dismissed, and
+    // the same composable recomposed before the lifecycle returned to RESUME).
     LaunchedEffect(isPlaying) {
-        while (true) {
-            hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-            delay(2000)
+        if (isPlaying) {
+            hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
         }
     }
 
@@ -191,11 +215,26 @@ fun StreamOscilloTrace(
             ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
         )
     }
-    // poll permission (user may grant while screen is open)
+    // Re-check on lifecycle resume AND when isPlaying flips true. Replaces the
+    // previous `while (true)` 2-second poll, which never terminated while the
+    // composable was in composition.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasPermission = ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     LaunchedEffect(isPlaying) {
-        while (true) {
-            hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-            delay(2000)
+        if (isPlaying) {
+            hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
         }
     }
 

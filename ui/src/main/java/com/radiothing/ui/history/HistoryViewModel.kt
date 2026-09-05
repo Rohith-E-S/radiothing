@@ -51,10 +51,16 @@ class HistoryViewModel @Inject constructor(
 
     fun toggleFavorite(station: RadioStation) {
         viewModelScope.launch {
+            // Snapshot the list at the moment of the tap. The use case flips
+            // the persisted state, then the combined flow (recently-played ⊕
+            // favorite ids) re-emits and the StateFlow collector updates
+            // _uiState. Doing the optimistic flip from a stale local read
+            // would race with rapid taps.
+            val before = _uiState.value.history.find { it.stationUuid == station.stationUuid }?.isFavorite ?: station.isFavorite
             toggleFavoriteUseCase(station)
             val updatedHistory = _uiState.value.history.map {
                 if (it.stationUuid == station.stationUuid) {
-                    it.copy(isFavorite = !it.isFavorite)
+                    it.copy(isFavorite = !before)
                 } else it
             }
             _uiState.value = _uiState.value.copy(history = updatedHistory)

@@ -34,6 +34,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -107,7 +110,7 @@ fun NowPlayingScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White, modifier = Modifier.size(22.dp))
             }
             Column(
-//                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -292,6 +295,7 @@ fun NowPlayingScreen(
 //                .background(Panel)
 //                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 12.dp, vertical = 8.dp)
+                .semantics { contentDescription = "Transport controls" }
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -299,7 +303,13 @@ fun NowPlayingScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Prev — 56dp, labelled, disabled state muted
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.previous() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable(enabled = uiState.queue.size > 1) { viewModel.previous() }
+                        .semantics { contentDescription = "Previous station" }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
                     DotMatrixIcon(type = IconType.PREV, size = 26.dp, color = if (uiState.queue.size > 1) Color.White else Color(0xFF555555))
                     Spacer(Modifier.height(2.dp))
                     Text("PREV", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
@@ -310,13 +320,20 @@ fun NowPlayingScreen(
                         .size(72.dp)
                         .clip(CircleShape)
                         .background(BrightRed)
-                        .clickable { viewModel.togglePlayPause() },
+                        .clickable { viewModel.togglePlayPause() }
+                        .semantics { contentDescription = if (uiState.isPlaying) "Pause" else "Play" },
                     contentAlignment = Alignment.Center
                 ) {
                     DotMatrixIcon(type = if (uiState.isPlaying) IconType.PAUSE else IconType.PLAY, size = 32.dp, color = Color.White)
                 }
                 // Next
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable(enabled = uiState.queue.size > 1) { viewModel.next() }.padding(horizontal = 8.dp, vertical = 4.dp)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable(enabled = uiState.queue.size > 1) { viewModel.next() }
+                        .semantics { contentDescription = "Next station" }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
                     DotMatrixIcon(type = IconType.NEXT, size = 26.dp, color = if (uiState.queue.size > 1) Color.White else Color(0xFF555555))
                     Spacer(Modifier.height(2.dp))
                     Text("NEXT", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
@@ -345,6 +362,10 @@ fun NowPlayingScreen(
                         .weight(1f)
                         .height(14.dp)
                         .clip(RoundedCornerShape(100.dp))
+                        .semantics {
+                            contentDescription = "Volume"
+                            stateDescription = "${(uiState.volume * 100).toInt()} percent"
+                        }
                         .pointerInput(Unit) {
                             detectTapGestures { offset ->
                                 val fraction = (offset.x / size.width).coerceIn(0f, 1f)

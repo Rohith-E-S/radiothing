@@ -34,6 +34,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -91,6 +93,12 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
                 val playerState by viewModel.playerState.collectAsStateWithLifecycle()
                 val snackbarHostState = remember { SnackbarHostState() }
+                // Error-event key — increments on every error change, even when the
+                // message string is the same as the last one. Without it, repeated
+                // identical errors (same message from same source) would not retrigger
+                // the snackbar because LaunchedEffect keys on `error` by value.
+                var errorKey by remember { mutableIntStateOf(0) }
+                var lastErrorMessage by remember { mutableStateOf<String?>(null) }
 
                 LaunchedEffect(Unit) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -109,13 +117,22 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(playerState.error) {
-                    playerState.error?.let {
-                        snackbarHostState.showSnackbar(it)
+                    val msg = playerState.error
+                    if (msg != null && msg != lastErrorMessage) {
+                        lastErrorMessage = msg
+                        errorKey++
+                    } else if (msg == null) {
+                        lastErrorMessage = null
                     }
+                }
+                LaunchedEffect(errorKey) {
+                    lastErrorMessage?.let { snackbarHostState.showSnackbar(it) }
                 }
 
                 val isNowPlayingScreen = currentRoute == Screen.NowPlaying.route
-                val isPlaylistDetail = currentRoute?.startsWith("playlist/") == true
+                val isPlaylistDetail = currentRoute?.let { route ->
+                    route.startsWith("playlist/") && route != "playlist/"
+                } == true
                 val showOverlay = isNowPlayingScreen || isPlaylistDetail
                 // Miniplayer only when actively playing or tuning (buffering) — not when paused/stopped
                 val showMiniPlayer = !showOverlay && playerState.currentStation != null &&
@@ -126,10 +143,16 @@ class MainActivity : ComponentActivity() {
 
                 // Stable lambdas so the pager's content slot doesn't recompose on every frame
                 val onStationClick = remember(navController) {
-                    { _: String -> navController.navigate(Screen.NowPlaying.route) }
+                    { _: String ->
+                        // launchSingleTop prevents stacked NowPlaying entries when the user
+                        // reopens the same destination (e.g., tap station, tap mini player,
+                        // tap another station from queue). Without it, the back button could
+                        // cycle through several NowPlaying instances.
+                        navController.navigate(Screen.NowPlaying.route) { launchSingleTop = true }
+                    }
                 }
                 val onPlaylistClick = remember(navController) {
-                    { id: Long -> navController.navigate("playlist/$id") }
+                    { id: Long -> navController.navigate("playlist/$id") { launchSingleTop = true } }
                 }
 
                 // Selected tab index — only changes when the user lands on a new tab,
@@ -189,7 +212,9 @@ class MainActivity : ComponentActivity() {
                                         onPlayPauseClick = { viewModel.playPause() },
                                         onNext = { viewModel.next() },
                                         onPrevious = { viewModel.previous() },
-                                        onExpandClick = { navController.navigate(Screen.NowPlaying.route) },
+                                        onExpandClick = {
+                                            navController.navigate(Screen.NowPlaying.route) { launchSingleTop = true }
+                                        },
                                         modifier = Modifier
                                             .padding(horizontal = 16.dp)
                                             .padding(bottom = 8.dp)

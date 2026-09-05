@@ -33,8 +33,6 @@ class NowPlayingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(NowPlayingUiState())
-
     val audioSessionId: StateFlow<Int> = playerManager.audioSessionId
 
     val playlists: StateFlow<List<Playlist>> = playlistRepository.getPlaylists()
@@ -43,16 +41,19 @@ class NowPlayingViewModel @Inject constructor(
     val playlistCounts: StateFlow<Map<Long, Int>> = playlistRepository.getPlaylistStationCounts()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    // _uiState was previously a MutableStateFlow that was never written to and
+    // combined into a derived flow — dead state. The combine below builds the
+    // state from the source flows directly, so the empty MutableStateFlow was
+    // contributing nothing beyond an extra combine slot.
     val uiState: StateFlow<NowPlayingUiState> = combine(
-        _uiState,
         playerManager.playerState,
         playerManager.volume,
         playerManager.sleepTimerRemaining,
         favoriteRepository.getFavoriteIds()
-    ) { state, player, volume, sleepMs, favIds ->
+    ) { player, volume, sleepMs, favIds ->
         val enrichedStation = player.currentStation?.let { it.copy(isFavorite = favIds.contains(it.stationUuid)) }
         val enrichedQueue = player.queue.map { it.copy(isFavorite = favIds.contains(it.stationUuid)) }
-        state.copy(
+        NowPlayingUiState(
             currentStation = enrichedStation,
             isPlaying = player.isPlaying,
             isBuffering = player.isBuffering,
