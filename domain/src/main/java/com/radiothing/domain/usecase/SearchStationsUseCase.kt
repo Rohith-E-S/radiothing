@@ -34,6 +34,7 @@ class SearchStationsUseCase @Inject constructor(
         val nameWords = mutableListOf<String>()
 
         raw.trim().split(Regex("\\s+")).forEach { token ->
+            if (token.isEmpty()) return@forEach
             val lower = token.lowercase()
             when {
                 lower.startsWith("country:") && token.length > 8 -> country = token.substring(8)
