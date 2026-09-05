@@ -77,7 +77,10 @@ fun StreamDotEqualizer(
     // Smoothing buffer — keeps motion from jittering
     var smoothed by remember { mutableStateOf(FloatArray(barCount) { 0.15f }) }
 
-    DisposableEffect(audioSessionId, isPlaying, hasPermission) {
+    // Keyed on isBuffering too: a session typically appears while buffering
+    // (can=false); without this key the effect never re-runs when buffering
+    // finishes, so the Visualizer is never created until play/pause toggles.
+    DisposableEffect(audioSessionId, isPlaying, isBuffering, hasPermission) {
         vizRef?.release(); vizRef = null; fftLevels = null
         val can = hasPermission && isPlaying && !isBuffering && audioSessionId != 0 && audioSessionId != -1
         if (!can) { onDispose {} } else {
@@ -242,7 +245,8 @@ fun StreamOscilloTrace(
     var visualizerRef by remember { mutableStateOf<Visualizer?>(null) }
 
     // Real capture — Dispose when session changes / stops
-    DisposableEffect(audioSessionId, isPlaying, hasPermission) {
+    // Same isBuffering key requirement as the FFT equalizer above.
+    DisposableEffect(audioSessionId, isPlaying, isBuffering, hasPermission) {
         // tear down previous
         visualizerRef?.release()
         visualizerRef = null
