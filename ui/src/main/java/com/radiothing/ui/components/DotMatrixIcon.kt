@@ -111,6 +111,31 @@ fun DotMatrixIcon(
         val startX = spacing / 2f
         val startY = spacing / 2f
 
+        // Optical (mass) centering for glyphs whose silhouette can't sit dead
+        // centre on the grid — a triangle's dots are 5/3/1 across its columns,
+        // so any whole-column placement leaves its mass off centre (the
+        // right-anchored PLAY triangle's centroid is column 2.556 of a 2.0
+        // centre). Shift the drawn dots so the mass centroid lands exactly on
+        // the canvas centre. Only glyphs that opt in move; symmetric glyphs
+        // (PAUSE, BROWSE, ...) compute a zero shift anyway, and PREV/NEXT keep
+        // their intentional mirrored placement.
+        val massShiftX = when (type) {
+            IconType.PLAY -> {
+                var dots = 0f
+                var weightedCols = 0f
+                matrix.forEach { row ->
+                    row.forEachIndexed { col, cell ->
+                        if (cell == 1) {
+                            dots += 1f
+                            weightedCols += col
+                        }
+                    }
+                }
+                if (dots > 0f) (2f - weightedCols / dots) * spacing else 0f
+            }
+            else -> 0f
+        }
+
         for (row in 0 until 5) {
             for (col in 0 until 5) {
                 if (matrix[row][col] == 1) {
@@ -118,7 +143,7 @@ fun DotMatrixIcon(
                         color = color,
                         radius = dotRadius,
                         center = Offset(
-                            x = startX + col * spacing,
+                            x = startX + col * spacing + massShiftX,
                             y = startY + row * spacing
                         )
                     )
