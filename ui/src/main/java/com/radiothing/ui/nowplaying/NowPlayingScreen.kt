@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +55,8 @@ import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.Ndot57
+import com.radiothing.domain.model.RadioStation
+import com.radiothing.ui.theme.RadioThingTheme
 
 // ── BLACK LAB / OSCILLOSCOPE BENCH ──
 // Impeccable surface: whole surface inside BLACK LAB world, composition = Oscilloscope Lab Bench (dealt 4 lead, seed 2426ab76)
@@ -69,11 +72,6 @@ fun NowPlayingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val audioSessionId by viewModel.audioSessionId.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
-    var lastHapticBlock by remember { mutableIntStateOf(-1) }
-    var showQueue by remember { mutableStateOf(false) }
-    var showSleep by remember { mutableStateOf(false) }
-    var showAddToPlaylist by remember { mutableStateOf(false) }
     var micPermissionRequested by remember { mutableStateOf(false) }
 
     // Contextual mic-permission ask — the visualizer is the only consumer.
@@ -89,6 +87,51 @@ fun NowPlayingScreen(
             }
         }
     }
+
+    NowPlayingContent(
+        uiState = uiState,
+        audioSessionId = audioSessionId,
+        playlists = viewModel.playlists.collectAsStateWithLifecycle().value,
+        playlistCounts = viewModel.playlistCounts.collectAsStateWithLifecycle().value,
+        onBack = onBack,
+        onTogglePlayPause = viewModel::togglePlayPause,
+        onPrevious = viewModel::previous,
+        onNext = viewModel::next,
+        onSetVolume = viewModel::setVolume,
+        onToggleFavorite = viewModel::toggleFavorite,
+        onSeekInQueue = viewModel::seekInQueue,
+        onStartSleepTimer = viewModel::startSleepTimer,
+        onCancelSleepTimer = viewModel::cancelSleepTimer,
+        onAddToPlaylist = viewModel::addStationToPlaylist,
+        onCreateAndAdd = viewModel::createPlaylistAndAddStation
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NowPlayingContent(
+    uiState: NowPlayingUiState,
+    audioSessionId: Int,
+    playlists: List<com.radiothing.domain.model.Playlist>,
+    playlistCounts: Map<Long, Int>,
+    onBack: () -> Unit,
+    onTogglePlayPause: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onSetVolume: (Float) -> Unit,
+    onToggleFavorite: () -> Unit,
+    onSeekInQueue: (Int) -> Unit,
+    onStartSleepTimer: (Long) -> Unit,
+    onCancelSleepTimer: () -> Unit,
+    onAddToPlaylist: (Long) -> Unit,
+    onCreateAndAdd: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    var lastHapticBlock by remember { mutableIntStateOf(-1) }
+    var showQueue by remember { mutableStateOf(false) }
+    var showSleep by remember { mutableStateOf(false) }
+    var showAddToPlaylist by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -140,16 +183,16 @@ fun NowPlayingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(100.dp))
-                    .background(Color(0xFF1A0A0A))
+//                    .background(Color(0xFF1A0A0A))
                     .border(1.dp, BrightRed.copy(0.5f), RoundedCornerShape(100.dp))
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(uiState.error ?: "", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    TextButton(onClick = { viewModel.togglePlayPause() }) { Text("RETRY", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                    TextButton(onClick = { onTogglePlayPause() }) { Text("RETRY", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(5.dp))
         }
 
 
@@ -157,38 +200,37 @@ fun NowPlayingScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(100.dp))
-                .background(Panel)
-                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
+
+                    Spacer(Modifier.height(0.dp))
                     Text(
                         text = uiState.currentStation?.name?.uppercase() ?: "NO SPECIMEN",
-                        color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 20.sp, letterSpacing = 0.5.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.height(2.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (uiState.currentStation?.country?.isNotEmpty() == true) {
                             Text(
                                 uiState.currentStation!!.country.uppercase(),
-                                color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp,
+                                color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 0.8.sp,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 // shrink first — votes/tray stay pinned at natural width
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                         }
+                        Spacer(Modifier.width(2.dp))
                         if ((uiState.currentStation?.votes ?: 0) > 0) {
-                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        }
-                        if (uiState.queue.size > 1) {
-                            Text("${uiState.queueIndex + 1}/${uiState.queue.size} IN TRAY", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp)
+                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
         }
+
+        Spacer(Modifier.height(8.dp))
 
         // Tags — horizontal pill row, scroll not needed (take 4)
         val tags = uiState.currentStation?.tags?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }?.take(4) ?: emptyList()
@@ -296,16 +338,15 @@ fun NowPlayingScreen(
 
 
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         // ── Transport — primary pill, clear hierarchy: Prev / PLAY / Next only
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(100.dp))
+                .clip(RoundedCornerShape(10000.dp))
                 .background(Panel)
-                .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                .padding(horizontal = 12.dp, vertical = 8.dp)
+                .padding(horizontal = 4.dp, vertical = 70.dp)
                 .semantics { contentDescription = "Transport controls" }
         ) {
             Row(
@@ -317,13 +358,12 @@ fun NowPlayingScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .clickable(enabled = uiState.queue.size > 1) { viewModel.previous() }
+                        .clickable(enabled = uiState.queue.size > 1) { onPrevious() }
                         .semantics { contentDescription = "Previous station" }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     DotMatrixIcon(type = IconType.PREV, size = 26.dp, color = if (uiState.queue.size > 1) Color.White else Color(0xFF555555))
-                    Spacer(Modifier.height(2.dp))
-                    Text("PREV", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
+                   Spacer(Modifier.height(2.dp))
                 }
                 // Play — 72dp hero, red, single focal point
                 Box(
@@ -331,7 +371,7 @@ fun NowPlayingScreen(
                         .size(72.dp)
                         .clip(CircleShape)
                         .background(BrightRed)
-                        .clickable { viewModel.togglePlayPause() }
+                        .clickable { onTogglePlayPause() }
                         .semantics { contentDescription = if (uiState.isPlaying) "Pause" else "Play" },
                     contentAlignment = Alignment.Center
                 ) {
@@ -341,18 +381,17 @@ fun NowPlayingScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .clickable(enabled = uiState.queue.size > 1) { viewModel.next() }
+                        .clickable(enabled = uiState.queue.size > 1) { onNext() }
                         .semantics { contentDescription = "Next station" }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     DotMatrixIcon(type = IconType.NEXT, size = 26.dp, color = if (uiState.queue.size > 1) Color.White else Color(0xFF555555))
                     Spacer(Modifier.height(2.dp))
-                    Text("NEXT", color = if (uiState.queue.size > 1) TextWhite35 else Color(0xFF444444), fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 1.sp)
                 }
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(24.dp))
 
         // ── Volume — single pill: blocks ARE the slider (tap or slide anywhere on the track)
         Box(
@@ -360,7 +399,7 @@ fun NowPlayingScreen(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(100.dp))
                 .border(1.dp, GridLine, RoundedCornerShape(100.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp)
+                .padding(horizontal = 14.dp, vertical = 2.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("VOL", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
@@ -386,7 +425,7 @@ fun NowPlayingScreen(
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     lastHapticBlock = block
                                 }
-                                viewModel.setVolume(fraction)
+                                onSetVolume(fraction)
                             }
                         }
                         .pointerInput(Unit) {
@@ -397,7 +436,7 @@ fun NowPlayingScreen(
                                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                                     lastHapticBlock = block
                                 }
-                                viewModel.setVolume(fraction)
+                                onSetVolume(fraction)
                                 change.consume()
                             }
                         },
@@ -421,9 +460,11 @@ fun NowPlayingScreen(
                 Spacer(Modifier.width(10.dp))
             }
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(24.dp))
 
-        // ── Utility — secondary pill, distinct from transport, labelled, not crowded
+
+
+        // ── Bottom bar — secondary pill, distinct from transport, labelled, not crowded
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -432,30 +473,50 @@ fun NowPlayingScreen(
                 .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                 .padding(horizontal = 8.dp, vertical = 6.dp)
         ) {
+            // Equal quarters — weight(1f) per section so the dividers split the bar
+            // proportionally regardless of label width (QUEUE n/m must not reflow the rest)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                UtilityChip(
-                    icon = if (uiState.currentStation?.isFavorite == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    label = "FAV",
-                    active = uiState.currentStation?.isFavorite == true,
-                    onClick = { viewModel.toggleFavorite() }
-                )
+                //favourite
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    UtilityChip(
+                        icon = if (uiState.currentStation?.isFavorite == true) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        label = "FAV",
+                        active = uiState.currentStation?.isFavorite == true,
+                        onClick = { onToggleFavorite() }
+                    )
+                }
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
-                UtilityChip(icon = Icons.AutoMirrored.Filled.PlaylistAdd, label = "TRAY+", active = false, onClick = { showAddToPlaylist = true })
-                UtilityChip(icon = Icons.Default.Timer, label = if (uiState.sleepRemainingMs > 0) "${uiState.sleepRemainingMs / 60000}M" else "SLEEP", active = uiState.sleepRemainingMs > 0, onClick = { showSleep = true })
+                //Playlist
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    UtilityChip(icon = Icons.AutoMirrored.Filled.PlaylistAdd, label = "TRAY+", active = false, onClick = { showAddToPlaylist = true })
+                }
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
-                UtilityChip(icon = Icons.Default.Share, label = "SHARE", onClick = {
-                    uiState.currentStation?.let { s ->
-                        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "${s.name} - ${s.urlResolved.ifEmpty { s.url }}") }
-                        // No chooser handler is legal on some devices/AOSP builds
-                        runCatching { context.startActivity(Intent.createChooser(send, "Share")) }
-                    }
-                })
+
+                //Sleep
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    UtilityChip(icon = Icons.Default.Timer, label = if (uiState.sleepRemainingMs > 0) "${uiState.sleepRemainingMs / 60000}M" else "SLEEP", active = uiState.sleepRemainingMs > 0, onClick = { showSleep = true })
+                }
                 Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
-                UtilityChip(icon = Icons.AutoMirrored.Filled.QueueMusic, label = "QUEUE${if (uiState.queue.size > 1) " ${uiState.queueIndex + 1}/${uiState.queue.size}" else ""}", onClick = { showQueue = true })
+
+                //Share
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    UtilityChip(icon = Icons.Default.Share, label = "SHARE", onClick = {
+                        uiState.currentStation?.let { s ->
+                            val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, "${s.name} - ${s.urlResolved.ifEmpty { s.url }}") }
+                            // No chooser handler is legal on some devices/AOSP builds
+                            runCatching { context.startActivity(Intent.createChooser(send, "Share")) }
+                        }
+                    })
+                }
+                Box(Modifier.width(1.dp).height(36.dp).background(GridLine.copy(alpha = 0.6f)))
+
+                //Queue
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                    UtilityChip(icon = Icons.AutoMirrored.Filled.QueueMusic, label = "QUEUE${if (uiState.queue.size > 1) " ${uiState.queueIndex + 1}/${uiState.queue.size}" else ""}", onClick = { showQueue = true })
+                }
             }
         }
 
@@ -489,7 +550,7 @@ fun NowPlayingScreen(
                                     .clip(RoundedCornerShape(100.dp))
                                     .background(if (isCurrent) Panel else Ink)
                                     .border(1.dp, if (isCurrent) BrightRed.copy(0.4f) else GridLine, RoundedCornerShape(100.dp))
-                                    .clickable { viewModel.seekInQueue(idx); showQueue = false }
+                                    .clickable { onSeekInQueue(idx); showQueue = false }
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -513,14 +574,14 @@ fun NowPlayingScreen(
         if (station != null) {
             com.radiothing.ui.components.AddToPlaylistSheet(
                 station = station,
-                playlists = viewModel.playlists.collectAsStateWithLifecycle().value,
-                counts = viewModel.playlistCounts.collectAsStateWithLifecycle().value,
+                playlists = playlists,
+                counts = playlistCounts,
                 onAddTo = { id ->
-                    viewModel.addStationToPlaylist(id)
+                    onAddToPlaylist(id)
                     showAddToPlaylist = false
                 },
                 onCreateAndAdd = { name ->
-                    viewModel.createPlaylistAndAddStation(name)
+                    onCreateAndAdd(name)
                     showAddToPlaylist = false
                 },
                 onDismiss = { showAddToPlaylist = false }
@@ -545,7 +606,7 @@ fun NowPlayingScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     listOf(5, 15, 30, 60).forEach { mins ->
                         OutlinedButton(
-                            onClick = { viewModel.startSleepTimer(mins * 60_000L); showSleep = false },
+                            onClick = { onStartSleepTimer(mins * 60_000L); showSleep = false },
                             modifier = Modifier.weight(1f), shape = RoundedCornerShape(100.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                             border = androidx.compose.foundation.BorderStroke(1.dp, GridLine)
@@ -554,7 +615,7 @@ fun NowPlayingScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Button(
-                    onClick = { viewModel.cancelSleepTimer(); showSleep = false },
+                    onClick = { onCancelSleepTimer(); showSleep = false },
                     modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(100.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = BrightRed)
                 ) { Text("CANCEL", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
@@ -563,6 +624,8 @@ fun NowPlayingScreen(
         }
     }
 }
+
+
 
 @Composable
 private fun UtilityChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, active: Boolean = false, onClick: () -> Unit) {
@@ -575,8 +638,40 @@ private fun UtilityChip(icon: androidx.compose.ui.graphics.vector.ImageVector, l
     ) {
         Icon(icon, contentDescription = label, tint = if (active) BrightRed else TextWhite35, modifier = Modifier.size(18.dp))
         Spacer(Modifier.height(3.dp))
-        Text(label, color = if (active) BrightRed else TextWhite35, fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 0.8.sp, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
+        Text(label, color = if (active) BrightRed else TextWhite35, fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 0.8.sp, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
+
+// ── Previews — static sample data; callbacks are no-ops, audio session 0 = synthetic waveform
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Playing")
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Queue in tray")
+@Composable
+private fun NowPlayingScreenPreview() {
+    val specimen = RadioStation(
+        stationUuid = "preview-1", name = "SomaFM Groove Salad", url = "", urlResolved = "",
+        homepage = "", favicon = "", tags = "ambient,chill,electronic,downtempo",
+        country = "United States", countryCode = "US", language = "english",
+        codec = "AAC", bitrate = 128, votes = 312, clickCount = 9200, clickTrend = 0, lastCheckOk = true
+    )
+    val specimen2 = specimen.copy(stationUuid = "preview-2", name = "NTS Radio 1", codec = "MP3", bitrate = 320)
+    RadioThingTheme {
+        NowPlayingContent(
+            uiState = NowPlayingUiState(
+                currentStation = specimen,
+                isPlaying = true,
+                volume = 0.6f,
+                queue = listOf(specimen, specimen2),
+                queueIndex = 0
+            ),
+            audioSessionId = 0,
+            playlists = emptyList(),
+            playlistCounts = emptyMap(),
+            onBack = {}, onTogglePlayPause = {}, onPrevious = {}, onNext = {},
+            onSetVolume = {}, onToggleFavorite = {}, onSeekInQueue = {},
+            onStartSleepTimer = {}, onCancelSleepTimer = {},
+            onAddToPlaylist = {}, onCreateAndAdd = {}
+        )
+    }
+}
 
