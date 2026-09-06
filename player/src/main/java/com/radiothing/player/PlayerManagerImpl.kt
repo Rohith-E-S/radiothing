@@ -54,6 +54,14 @@ class PlayerManagerImpl @Inject constructor(
         _audioSessionId.value = sessionId
     }
 
+    private val _spectrumBins = MutableStateFlow<FloatArray?>(null)
+    override val spectrumBins: StateFlow<FloatArray?> = _spectrumBins.asStateFlow()
+    override fun onServiceSpectrumBins(bins: FloatArray) {
+        // Set from the playback thread at ~45 Hz; StateFlow conflates, so slow
+        // collectors see only the freshest spectrum frame.
+        _spectrumBins.value = bins
+    }
+
     // --- Internal ---
 
     /** Whether the service's ExoPlayer is attached and has something prepared. */

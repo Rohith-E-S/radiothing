@@ -57,6 +57,15 @@ interface PlayerManager {
     val audioSessionId: StateFlow<Int>
     fun onServiceAudioSessionIdChanged(sessionId: Int)
 
+    /**
+     * Live FFT bins of the audible output (512 magnitudes, byte-scale ≈ what
+     * Visualizer used to emit) fed by the player's PCM tap. Null until the
+     * first spectrum frame arrives; stays null while audio is offloaded to
+     * the DSP (UI falls back to its synthetic animation).
+     */
+    val spectrumBins: StateFlow<FloatArray?>
+    fun onServiceSpectrumBins(bins: FloatArray)
+
     // Called by service to push state back up
     fun onServicePlayingChanged(isPlaying: Boolean, player: Player?)
     fun onServiceBufferingChanged(isBuffering: Boolean)

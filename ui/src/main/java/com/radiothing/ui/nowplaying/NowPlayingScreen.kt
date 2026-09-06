@@ -70,27 +70,10 @@ fun NowPlayingScreen(
     onBack: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val audioSessionId by viewModel.audioSessionId.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    var micPermissionRequested by remember { mutableStateOf(false) }
-
-    // Contextual mic-permission ask — the visualizer is the only consumer.
-    // Requested on first Now Playing open (not cold start), one shot per session;
-    // denial simply keeps the synthetic waveform. No rationale dialog needed.
-    LaunchedEffect(uiState.isPlaying) {
-        if (uiState.isPlaying && !micPermissionRequested) {
-            micPermissionRequested = true
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M &&
-                androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED
-            ) {
-                (context as? android.app.Activity)?.requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 7001)
-            }
-        }
-    }
 
     NowPlayingContent(
         uiState = uiState,
-        audioSessionId = audioSessionId,
+        spectrumBins = viewModel.spectrumBins,
         playlists = viewModel.playlists.collectAsStateWithLifecycle().value,
         playlistCounts = viewModel.playlistCounts.collectAsStateWithLifecycle().value,
         onBack = onBack,
@@ -111,7 +94,7 @@ fun NowPlayingScreen(
 @Composable
 private fun NowPlayingContent(
     uiState: NowPlayingUiState,
-    audioSessionId: Int,
+    spectrumBins: kotlinx.coroutines.flow.StateFlow<FloatArray?>,
     playlists: List<com.radiothing.domain.model.Playlist>,
     playlistCounts: Map<Long, Int>,
     onBack: () -> Unit,
@@ -269,7 +252,7 @@ private fun NowPlayingContent(
                     .background(Color(0xFF050507))
             ) {
                 // Equalizer — REAL FFT when available, dotted bars in RED+WHITE like reference image
-                StreamDotEqualizer(audioSessionId = audioSessionId, isPlaying = uiState.isPlaying, isBuffering = uiState.isBuffering, modifier = Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 8.dp))
+                StreamDotEqualizer(spectrumBins = spectrumBins, isPlaying = uiState.isPlaying, isBuffering = uiState.isBuffering, modifier = Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 8.dp))
 
                 // Station badge — pill, bottom-left inside CRT
                 Box(
@@ -664,7 +647,7 @@ private fun NowPlayingScreenPreview() {
                 queue = listOf(specimen, specimen2),
                 queueIndex = 0
             ),
-            audioSessionId = 0,
+            spectrumBins = kotlinx.coroutines.flow.MutableStateFlow(null),
             playlists = emptyList(),
             playlistCounts = emptyMap(),
             onBack = {}, onTogglePlayPause = {}, onPrevious = {}, onNext = {},

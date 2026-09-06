@@ -48,3 +48,6 @@ build/
 # google-services.json
 DESIGN.md
 PRODUCT.md
+
+# Release signing credentials (machine-local)
+keystore.properties

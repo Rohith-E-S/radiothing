@@ -1,29 +1,19 @@
 package com.radiothing.ui.nowplaying
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.media.audiofx.Visualizer
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.pow
 
 /**
- * Real stream-driven visuals. Oscilloscope (waveform) + dotted equalizer (FFT).
- * Both fall back to synthetic when session is 0 / permission denied / idle.
+ * Real stream-driven visuals. Dotted equalizer (FFT) driven by the player's
+ * PCM tap (PlayerManager.spectrumBins) — no RECORD_AUDIO permission involved.
+ * Falls back to synthetic when no spectrum data arrives (audio offload to
+ * DSP bypasses the PCM path) or while idle.
  */
 
 // ── Dotted equalizer that looks like the reference image, but RED + WHITE ──
@@ -31,112 +21,29 @@ import kotlin.math.pow
 
 @Composable
 fun StreamDotEqualizer(
-    audioSessionId: Int,
+    spectrumBins: StateFlow<FloatArray?>,
     isPlaying: Boolean,
     isBuffering: Boolean,
     modifier: Modifier = Modifier,
     barCount: Int = 10,
     rowCount: Int = 26
 ) {
-    val context = LocalContext.current
-    var hasPermission by remember {
-        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
-    }
-    // Re-check permission when (a) the user toggles play/pause (the prompt fires
-    // from the screen the first time), or (b) we come back to the foreground
-    // after the system dialog was dismissed. Polling the permission every 2s
-    // when playing catches both, but the previous version used `while (true)`
-    // which never terminated — we now read the permission once per [isPlaying]
-    // change and once per [ON_RESUME] lifecycle event.
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                hasPermission = ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
-    // Belt-and-braces: also re-check when isPlaying flips true (catches the
-    // case where the user granted permission, the prompt was dismissed, and
-    // the same composable recomposed before the lifecycle returned to RESUME).
-    LaunchedEffect(isPlaying) {
-        if (isPlaying) {
-            hasPermission = ContextCompat.checkSelfPermission(
-                context, Manifest.permission.RECORD_AUDIO
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-    }
+    val incomingBins by spectrumBins.collectAsStateWithLifecycle()
 
     var fftLevels by remember { mutableStateOf<FloatArray?>(null) }
-    var vizRef by remember { mutableStateOf<Visualizer?>(null) }
+
+    // Collapse 512 spectrum bins into barCount log-spaced bands — same mapping
+    // (and the same fixed-reference normalization) the Visualizer path used,
+    // since SpectrumTapProcessor emits Visualizer-compatible magnitudes.
+    val banded = remember(incomingBins, barCount) {
+        incomingBins?.let { bins -> bandSpectrum(bins, barCount) }
+    }
+    LaunchedEffect(banded) {
+        if (banded != null) fftLevels = banded
+    }
 
     // Smoothing buffer — keeps motion from jittering
     var smoothed by remember { mutableStateOf(FloatArray(barCount) { 0.15f }) }
-
-    // Keyed on isBuffering too: a session typically appears while buffering
-    // (can=false); without this key the effect never re-runs when buffering
-    // finishes, so the Visualizer is never created until play/pause toggles.
-    DisposableEffect(audioSessionId, isPlaying, isBuffering, hasPermission) {
-        vizRef?.release(); vizRef = null; fftLevels = null
-        val can = hasPermission && isPlaying && !isBuffering && audioSessionId != 0 && audioSessionId != -1
-        if (!can) { onDispose {} } else {
-            var viz: Visualizer? = null
-            try {
-                viz = Visualizer(audioSessionId)
-                val range = Visualizer.getCaptureSizeRange()
-                viz.captureSize = range[1] // max for finest FFT
-                viz.setDataCaptureListener(object : Visualizer.OnDataCaptureListener {
-                    override fun onWaveFormDataCapture(v: Visualizer, w: ByteArray, sr: Int) {}
-                    override fun onFftDataCapture(v: Visualizer, f: ByteArray, sr: Int) {
-                        // f = FFT: interleaved real/imag
-                        val n = f.size / 2
-                        val mags = FloatArray(barCount)
-                        // Log-spaced bands (like real EQs): bar 0 covers a NARROW low band instead of
-                        // swallowing the whole bass region — this is what keeps it from pinning full
-                        val minBin = 2 // skip DC + leakage
-                        val maxBin = n - 1
-                        for (bar in 0 until barCount) {
-                            val lo = minBin + ((maxBin - minBin).toDouble() * (bar.toDouble() / barCount).pow(1.8)).toInt()
-                            val hi = minBin + ((maxBin - minBin).toDouble() * ((bar + 1).toDouble() / barCount).pow(1.8)).toInt()
-                            val end = hi.coerceAtMost(maxBin)
-                            var peak = 0f
-                            var c = 0
-                            var i = lo
-                            while (i < end) {
-                                val re = f[i * 2].toInt()
-                                val im = f[i * 2 + 1].toInt()
-                                val mag = kotlin.math.hypot(re.toDouble(), im.toDouble()).toFloat()
-                                if (mag > peak) peak = mag
-                                c++
-                                i++
-                            }
-                            mags[bar] = if (c > 0) peak else 0f
-                        }
-                        // Fixed-reference normalization (NOT per-frame max — max-normalization
-                        // is what pinned bar 0: bass always won, everything else scaled to it).
-                        // 96f ≈ loud bin magnitude for Visualizer FFT; tilt counters bass dominance.
-                        val normalized = FloatArray(barCount) { idx ->
-                            val tilt = 0.55 + 0.45 * (idx.toDouble() / (barCount - 1)) // bar0 ×0.55 → last ×1.0
-                            val raw = (mags[idx] / 96f) * tilt
-                            val v2 = raw.coerceIn(0.0, 1.0).pow(0.8)
-                            (0.06 + v2 * 0.9).toFloat().coerceIn(0f, 1f)
-                        }
-                        fftLevels = normalized
-                    }
-                }, Visualizer.getMaxCaptureRate() / 2, false, true)
-                viz.enabled = true
-                vizRef = viz
-            } catch (_: Exception) { viz?.release(); vizRef = null }
-            onDispose {
-                try { vizRef?.enabled = false; vizRef?.release() } catch (_: Exception) {}
-                vizRef = null
-            }
-        }
-    }
 
     // Smooth levels for rendering (lerp)
     val displayLevels = remember(fftLevels, isPlaying, isBuffering) {
@@ -197,5 +104,41 @@ fun StreamDotEqualizer(
                 }
             }
         }
+    }
+}
+
+/**
+ * Log-spaced band peaks over the raw spectrum (like real EQs): bar 0 covers a
+ * NARROW low band instead of swallowing the whole bass region — this is what
+ * keeps it from pinning full.
+ *
+ * Fixed-reference normalization (NOT per-frame max — max-normalization is
+ * what pinned bar 0: bass always won, everything else scaled to it).
+ * 96f ≈ loud bin magnitude for Visualizer FFT; tilt counters bass dominance.
+ */
+private fun bandSpectrum(bins: FloatArray, barCount: Int): FloatArray {
+    val n = bins.size
+    val mags = FloatArray(barCount)
+    val minBin = 2 // skip DC + leakage
+    val maxBin = n - 1
+    for (bar in 0 until barCount) {
+        val lo = minBin + ((maxBin - minBin).toDouble() * (bar.toDouble() / barCount).pow(1.8)).toInt()
+        val hi = minBin + ((maxBin - minBin).toDouble() * ((bar + 1).toDouble() / barCount).pow(1.8)).toInt()
+        val end = hi.coerceAtMost(maxBin)
+        var peak = 0f
+        var c = 0
+        var i = lo
+        while (i < end) {
+            if (bins[i] > peak) peak = bins[i]
+            c++
+            i++
+        }
+        mags[bar] = if (c > 0) peak else 0f
+    }
+    return FloatArray(barCount) { idx ->
+        val tilt = 0.55 + 0.45 * (idx.toDouble() / (barCount - 1)) // bar0 ×0.55 → last ×1.0
+        val raw = (mags[idx] / 96f) * tilt
+        val v2 = raw.coerceIn(0.0, 1.0).pow(0.8)
+        (0.06 + v2 * 0.9).toFloat().coerceIn(0f, 1f)
     }
 }

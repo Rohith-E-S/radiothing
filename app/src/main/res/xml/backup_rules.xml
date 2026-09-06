@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cloud backup / device transfer rules (API ≤ 30 / fullBackupContent).
+  Everything under this app is safe to back up: Room DB (favorites,
+  playlists, history), DataStore settings. No tokens, no credentials.
+  Declared explicitly so backup behavior doesn't silently drift with
+  framework defaults.
+-->
+<full-backup-content />
