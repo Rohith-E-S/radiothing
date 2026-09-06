@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,11 +57,11 @@ import com.radiothing.ui.theme.Ndot57
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.theme.RadioThingTheme
 import com.radiothing.ui.common.LocalBottomClearance
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowseScreen(
     viewModel: BrowseViewModel,
@@ -74,10 +75,63 @@ fun BrowseScreen(
     // the item whose boolean flips recomposes (not all N items per icon load).
     val iconReadyState = viewModel.iconReady.collectAsStateWithLifecycle()
     val keyboardController = LocalSoftwareKeyboardController.current
-    var showFilters by remember { mutableStateOf(false) }
 
     // Keep State wrapper — same derivedStateOf trick as iconReady.
     val playerStateState = playerManager.playerState.collectAsStateWithLifecycle()
+    val countries by viewModel.countries.collectAsStateWithLifecycle()
+    val tags by viewModel.tags.collectAsStateWithLifecycle()
+    val languages by viewModel.languages.collectAsStateWithLifecycle()
+
+    BrowseContent(
+        uiState = uiState,
+        iconReadyState = iconReadyState,
+        playerStateState = playerStateState,
+        countries = countries,
+        tags = tags,
+        languages = languages,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
+        onSearch = {
+            viewModel.performSearch()
+            keyboardController?.hide()
+        },
+        onClearQuery = { viewModel.onSearchQueryChange(""); viewModel.performSearch() },
+        onApplyFilters = viewModel::applyFilters,
+        onClearFilters = viewModel::clearFilters,
+        onRefresh = viewModel::refresh,
+        onRetry = viewModel::retry,
+        onRetryLoadMore = viewModel::retryLoadMore,
+        onLoadMore = viewModel::loadMore,
+        onStationClick = { uuid ->
+            viewModel.playStation(uuid)
+            onStationClick(uuid)
+        },
+        onFavoriteClick = viewModel::toggleFavorite
+    )
+}
+
+/** Stateless body of the browse screen — hoisted out so it can be previewed without a ViewModel. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BrowseContent(
+    uiState: BrowseUiState,
+    iconReadyState: State<Set<String>>,
+    playerStateState: State<PlayerState>,
+    countries: List<String>,
+    tags: List<String>,
+    languages: List<String>,
+    onSearchQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
+    onClearQuery: () -> Unit,
+    onApplyFilters: (FilterSelection) -> Unit,
+    onClearFilters: () -> Unit,
+    onRefresh: () -> Unit,
+    onRetry: () -> Unit,
+    onRetryLoadMore: () -> Unit,
+    onLoadMore: () -> Unit,
+    onStationClick: (String) -> Unit,
+    onFavoriteClick: (RadioStation) -> Unit
+) {
+    var showFilters by remember { mutableStateOf(false) }
 
     // Pull-to-refresh kept but will be attached only when list is idle at top (see BrowseStationList)
     // — avoids nestedScroll dispatch on every scroll frame at 120Hz. Trades instant pull sensitivity for butter.
@@ -87,7 +141,7 @@ fun BrowseScreen(
     // Gesture → one refresh; end as soon as VM's isRefreshing resolves
     if (pullState.isRefreshing) {
         LaunchedEffect(true) {
-            viewModel.refresh()
+            onRefresh()
         }
     }
     LaunchedEffect(uiState.isRefreshing) {
@@ -99,7 +153,7 @@ fun BrowseScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .windowInsetsPadding(WindowInsets.statusBars)
     ) {
         BrowseHeader(stationCount = uiState.stations.size)
@@ -108,31 +162,28 @@ fun BrowseScreen(
 
         BrowseSearchRow(
             query = uiState.searchQuery,
-            onQueryChange = viewModel::onSearchQueryChange,
-            onSearch = {
-                viewModel.performSearch()
-                keyboardController?.hide()
-            },
+            onQueryChange = onSearchQueryChange,
+            onSearch = onSearch,
             onFilterClick = { showFilters = true }
         )
 
         BrowseFilterHints(
             query = uiState.searchQuery,
-            onClearQuery = { viewModel.onSearchQueryChange(""); viewModel.performSearch() }
+            onClearQuery = onClearQuery
         )
 
         BrowseActiveFilters(
             filters = uiState.filters,
-            onClear = { viewModel.clearFilters() }
+            onClear = onClearFilters
         )
 
-            Box(modifier = Modifier.fillMaxSize().padding(bottom = 0.dp)) {
+        Box(modifier = Modifier.fillMaxSize().padding(bottom = 0.dp)) {
             when {
                 uiState.isLoading -> {
                     StationListSkeleton(modifier = Modifier.fillMaxSize().padding(top = 4.dp))
                 }
                 uiState.error != null -> {
-                    ErrorState(message = uiState.error ?: "Unknown error", onRetry = { viewModel.retry() })
+                    ErrorState(message = uiState.error ?: "Unknown error", onRetry = onRetry)
                 }
                 uiState.stations.isEmpty() -> {
                     EmptyState(type = EmptyStateType.NO_RESULTS, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
@@ -142,7 +193,7 @@ fun BrowseScreen(
                         if (uiState.loadMoreError != null) {
                             LoadMoreErrorBanner(
                                 message = uiState.loadMoreError!!,
-                                onRetry = { viewModel.retryLoadMore() }
+                                onRetry = onRetryLoadMore
                             )
                         }
                         BrowseStationList(
@@ -152,12 +203,9 @@ fun BrowseScreen(
                             isLoading = uiState.isLoading,
                             iconReadyState = iconReadyState,
                             playerStateState = playerStateState,
-                            onLoadMore = viewModel::loadMore,
-                            onStationClick = { uuid ->
-                                viewModel.playStation(uuid)
-                                onStationClick(uuid)
-                            },
-                            onFavoriteClick = { viewModel.toggleFavorite(it) },
+                            onLoadMore = onLoadMore,
+                            onStationClick = onStationClick,
+                            onFavoriteClick = onFavoriteClick,
                             pullState = pullState,
                             canPullRefresh = canPullRefresh
                         )
@@ -170,18 +218,18 @@ fun BrowseScreen(
     if (showFilters) {
         FilterSheet(
             onApply = { selection: FilterSelection ->
-                viewModel.applyFilters(selection)
+                onApplyFilters(selection)
                 showFilters = false
             },
             onClear = {
-                viewModel.clearFilters()
+                onClearFilters()
                 showFilters = false
             },
             onDismiss = { showFilters = false },
             initial = uiState.filters,
-            countries = viewModel.countries.collectAsStateWithLifecycle().value,
-            tags = viewModel.tags.collectAsStateWithLifecycle().value,
-            languages = viewModel.languages.collectAsStateWithLifecycle().value
+            countries = countries,
+            tags = tags,
+            languages = languages
         )
     }
 }
@@ -434,7 +482,7 @@ private fun BrowseStationList(
         LazyColumn(
             state = listState,
             verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 4.dp)
+            contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 10.dp)
         ) {
             items(
                 stations,
@@ -526,5 +574,56 @@ private fun BrowseStationList(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Loaded")
+@Composable
+private fun BrowseScreenLoadedPreview() {
+    val specimen = RadioStation(
+        stationUuid = "preview-1", name = "SomaFM Groove Salad", url = "", urlResolved = "",
+        homepage = "", favicon = "", tags = "ambient,chill,electronic,downtempo",
+        country = "United States", countryCode = "US", language = "english",
+        codec = "AAC", bitrate = 128, votes = 312, clickCount = 9200, clickTrend = 0, lastCheckOk = true
+    )
+    val specimen2 = specimen.copy(stationUuid = "preview-2", name = "NTS Radio 1", codec = "MP3", bitrate = 320, country = "United Kingdom", countryCode = "GB")
+    val specimen3 = specimen.copy(stationUuid = "preview-3", name = "FIP", codec = "MP3", bitrate = 192, country = "France", countryCode = "FR")
+
+    RadioThingTheme {
+        BrowseContent(
+            uiState = BrowseUiState(
+                stations = listOf(specimen, specimen2, specimen3),
+                unfilteredStations = listOf(specimen, specimen2, specimen3),
+                isLoading = false
+            ),
+            iconReadyState = remember { mutableStateOf(setOf("preview-1", "preview-2")) },
+            playerStateState = remember { mutableStateOf(PlayerState(currentStation = specimen, isPlaying = true)) },
+            countries = emptyList(),
+            tags = emptyList(),
+            languages = emptyList(),
+            onSearchQueryChange = {}, onSearch = {}, onClearQuery = {},
+            onApplyFilters = {}, onClearFilters = {},
+            onRefresh = {}, onRetry = {}, onRetryLoadMore = {}, onLoadMore = {},
+            onStationClick = {}, onFavoriteClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Loading skeleton")
+@Composable
+private fun BrowseScreenLoadingPreview() {
+    RadioThingTheme {
+        BrowseContent(
+            uiState = BrowseUiState(isLoading = true),
+            iconReadyState = remember { mutableStateOf(emptySet()) },
+            playerStateState = remember { mutableStateOf(PlayerState()) },
+            countries = emptyList(),
+            tags = emptyList(),
+            languages = emptyList(),
+            onSearchQueryChange = {}, onSearch = {}, onClearQuery = {},
+            onApplyFilters = {}, onClearFilters = {},
+            onRefresh = {}, onRetry = {}, onRetryLoadMore = {}, onLoadMore = {},
+            onStationClick = {}, onFavoriteClick = {}
+        )
     }
 }

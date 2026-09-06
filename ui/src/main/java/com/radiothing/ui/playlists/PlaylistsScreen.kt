@@ -49,7 +49,7 @@ fun PlaylistsScreen(
             .fillMaxSize()
             .background(PureBlack)
             .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Column {

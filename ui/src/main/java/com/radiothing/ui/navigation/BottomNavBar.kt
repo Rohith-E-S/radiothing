@@ -2,9 +2,11 @@ package com.radiothing.ui.navigation
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -37,6 +39,8 @@ import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.theme.RadioThingTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 private data class TabItem(val screen: Screen, val iconType: IconType, val label: String)
 
@@ -80,22 +84,6 @@ fun BottomNavBar(
                 .height(64.dp)
                 .clip(RoundedCornerShape(32.dp))
                 .background(Panel)
-                .drawBehind {
-                    // Subtle red glow at top edge (the "live" hint)
-                    drawRoundRect(
-                        color = BrightRed.copy(alpha = 0.15f),
-                        topLeft = Offset.Zero,
-                        size = Size(size.width, 1.dp.toPx()),
-                        cornerRadius = CornerRadius(0f)
-                    )
-                    drawRoundRect(
-                        color = GridLine.copy(alpha = 0.6f),
-                        topLeft = Offset.Zero,
-                        size = Size(size.width, size.height),
-                        cornerRadius = CornerRadius(32.dp.toPx()),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
-                    )
-                }
         ) {
             // Animated red pill — reads pagerState inside the layout block so it
             // animates per frame without re-running the rest of the bar's composition.
@@ -119,15 +107,6 @@ fun BottomNavBar(
                     }
                     .clip(RoundedCornerShape(28.dp))
                     .background(Color(0x1AFF3344))
-                    .drawBehind {
-                        drawRoundRect(
-                            color = BrightRed.copy(alpha = 0.5f),
-                            topLeft = Offset.Zero,
-                            size = Size(size.width, size.height),
-                            cornerRadius = CornerRadius(28.dp.toPx()),
-                            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
-                        )
-                    }
             )
 
             // Tab buttons — only recompose when selectedIndex changes
@@ -172,6 +151,33 @@ fun BottomNavBar(
                     }
                 }
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, name = "Browse selected")
+@Composable
+private fun BottomNavBarPreview() {
+    BottomNavBarPreviewContent(selectedIndex = 0)
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, name = "Playlists selected")
+@Composable
+private fun BottomNavBarPlaylistsSelectedPreview() {
+    BottomNavBarPreviewContent(selectedIndex = 2)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun BottomNavBarPreviewContent(selectedIndex: Int) {
+    RadioThingTheme {
+        Box(Modifier.fillMaxSize()) {
+            BottomNavBar(
+                selectedIndex = selectedIndex,
+                pagerState = rememberPagerState(pageCount = { TAB_ITEMS.size }),
+                onNavigate = {},
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }

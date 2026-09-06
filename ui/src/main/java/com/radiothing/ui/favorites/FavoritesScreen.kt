@@ -64,7 +64,7 @@ fun FavoritesScreen(
             .fillMaxSize()
             .background(PureBlack)
             .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         // header + list (as before)
 
