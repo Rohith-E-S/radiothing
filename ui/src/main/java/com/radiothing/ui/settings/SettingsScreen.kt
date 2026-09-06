@@ -20,18 +20,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
+import com.radiothing.domain.model.AppSettings
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.theme.RadioThingTheme
 import com.radiothing.ui.common.LocalBottomClearance
 
 @Composable
@@ -46,6 +49,22 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         } catch (_: Exception) { "?" }
     }
 
+    SettingsContent(
+        appSettings = settings,
+        appVersion = appVersion,
+        onSetBufferSize = viewModel::setBufferSize,
+        onSetUseAsciiNotification = viewModel::setUseAsciiNotification
+    )
+}
+
+/** Stateless body of the settings screen — hoisted out so it can be previewed without a ViewModel. */
+@Composable
+private fun SettingsContent(
+    appSettings: AppSettings?,
+    appVersion: String,
+    onSetBufferSize: (Int) -> Unit,
+    onSetUseAsciiNotification: (Boolean) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,7 +93,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
         HorizontalDivider(color = GridLine, thickness = 1.dp)
         Spacer(Modifier.height(16.dp))
 
-        settings?.let { appSettings ->
+        appSettings?.let { appSettings ->
             SettingSectionHeader(title = "PLAYBACK")
             SettingsCard {
                 SettingSlider(
@@ -83,14 +102,14 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
                     range = 1000f..10000f,
                     suffix = "ms",
                     steps = 9,
-                    onValueChange = { viewModel.setBufferSize(it.toInt()) }
+                    onValueChange = { onSetBufferSize(it.toInt()) }
                 )
                 HorizontalDivider(color = GridLine)
                 SettingSwitch(
                     title = "ASCII NOTIFICATION",
                     subtitle = "Use block art in notification",
                     checked = appSettings.useAsciiNotification,
-                    onCheckedChange = { viewModel.setUseAsciiNotification(it) }
+                    onCheckedChange = { onSetUseAsciiNotification(it) }
                 )
             }
 
@@ -247,5 +266,51 @@ fun SettingSlider(
                 inactiveTickColor = Color.Transparent
             )
         )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Settings screen")
+@Composable
+private fun SettingsScreenPreview() {
+    RadioThingTheme {
+        SettingsContent(
+            appSettings = AppSettings(useAsciiNotification = true, bufferSize = 5000),
+            appVersion = "1.2.0",
+            onSetBufferSize = {},
+            onSetUseAsciiNotification = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "Setting row states")
+@Composable
+private fun SettingRowStatesPreview() {
+    RadioThingTheme {
+        Column(Modifier.padding(16.dp)) {
+            SettingSectionHeader(title = "PLAYBACK")
+            SettingsCard {
+                SettingSwitch(
+                    title = "ASCII NOTIFICATION",
+                    subtitle = "Use block art in notification",
+                    checked = true,
+                    onCheckedChange = {}
+                )
+                HorizontalDivider(color = GridLine)
+                SettingSwitch(
+                    title = "ASCII NOTIFICATION",
+                    checked = false,
+                    onCheckedChange = {}
+                )
+                HorizontalDivider(color = GridLine)
+                SettingSlider(
+                    title = "BUFFER SIZE",
+                    value = 5000f,
+                    range = 1000f..10000f,
+                    suffix = "ms",
+                    steps = 9,
+                    onValueChange = {}
+                )
+            }
+        }
     }
 }

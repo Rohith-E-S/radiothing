@@ -10,12 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radiothing.ui.theme.RadioThingTheme
 import kotlinx.coroutines.delay
 import kotlin.random.Random
 
@@ -94,5 +96,16 @@ fun ErrorState(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "Error state")
+@Composable
+private fun ErrorStatePreview() {
+    RadioThingTheme {
+        ErrorState(
+            message = "COULD NOT REACH THE STATION",
+            onRetry = {}
+        )
     }
 }

@@ -3,18 +3,23 @@ package com.radiothing.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.radiothing.ui.theme.BrightRed
 
 /**
  * Decorative chrome drawn with Canvas instead of block/sine text glyphs —
@@ -62,5 +67,18 @@ fun BlockFade(
             )
             if (index < 2) Spacer(Modifier.width(gap))
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "Glyphs")
+@Composable
+private fun DotGlyphsPreview() {
+    Column(
+        modifier = Modifier.padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        SineWaveGlyph(color = BrightRed, modifier = Modifier.size(60.dp, 24.dp), stroke = 3.dp)
+        Spacer(Modifier.padding(top = 20.dp))
+        BlockFade(color = BrightRed, blockSize = 12.dp)
     }
 }

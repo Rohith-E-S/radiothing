@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontFamily
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.domain.model.Playlist
@@ -31,7 +32,9 @@ import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.theme.RadioThingTheme
 import com.radiothing.ui.common.LocalBottomClearance
+import com.radiothing.ui.preview.previewPlaylists
 
 @Composable
 fun PlaylistsScreen(
@@ -40,6 +43,25 @@ fun PlaylistsScreen(
 ) {
     val playlists by viewModel.playlists.collectAsState()
     val counts by viewModel.playlistCounts.collectAsState()
+
+    PlaylistsContent(
+        playlists = playlists,
+        counts = counts,
+        onPlaylistClick = onPlaylistClick,
+        onCreatePlaylist = viewModel::createPlaylist,
+        onDeletePlaylist = viewModel::deletePlaylist
+    )
+}
+
+/** Stateless body of the playlists screen — hoisted out so it can be previewed without a ViewModel. */
+@Composable
+private fun PlaylistsContent(
+    playlists: List<Playlist>,
+    counts: Map<Long, Int>,
+    onPlaylistClick: (Long) -> Unit,
+    onCreatePlaylist: (String) -> Unit,
+    onDeletePlaylist: (Long) -> Unit
+) {
     var showCreate by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
     var deleteTarget by remember { mutableStateOf<Playlist?>(null) }
@@ -122,7 +144,7 @@ fun PlaylistsScreen(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            if (newName.isNotBlank()) viewModel.createPlaylist(newName.trim())
+                            if (newName.isNotBlank()) onCreatePlaylist(newName.trim())
                             newName = ""
                             showCreate = false
                         },
@@ -152,7 +174,7 @@ fun PlaylistsScreen(
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.deletePlaylist(playlist.id)
+                            onDeletePlaylist(playlist.id)
                             deleteTarget = null
                         }
                     ) { Text("DELETE", fontFamily = Ndot57, fontWeight = FontWeight.Bold, color = BrightRed) }
@@ -240,5 +262,33 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
                 modifier = Modifier.size(16.dp)
             )
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Loaded")
+@Composable
+private fun PlaylistsScreenLoadedPreview() {
+    RadioThingTheme {
+        PlaylistsContent(
+            playlists = previewPlaylists,
+            counts = mapOf(1L to 12, 2L to 3, 3L to 0),
+            onPlaylistClick = {},
+            onCreatePlaylist = {},
+            onDeletePlaylist = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Empty")
+@Composable
+private fun PlaylistsScreenEmptyPreview() {
+    RadioThingTheme {
+        PlaylistsContent(
+            playlists = emptyList(),
+            counts = emptyMap(),
+            onPlaylistClick = {},
+            onCreatePlaylist = {},
+            onDeletePlaylist = {}
+        )
     }
 }

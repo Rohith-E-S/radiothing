@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.domain.model.StationOrder
@@ -48,6 +49,7 @@ import com.radiothing.ui.theme.Ndot57
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.theme.RadioThingTheme
 
 /** Selection state carried between Browse and the FilterSheet. */
 data class FilterSelection(
@@ -311,5 +313,21 @@ fun FilterSheet(
             }
             Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, device = "spec:width=412dp,height=915dp", name = "Filter sheet")
+@Composable
+private fun FilterSheetPreview() {
+    RadioThingTheme {
+        FilterSheet(
+            onApply = {},
+            onClear = {},
+            onDismiss = {},
+            initial = FilterSelection(country = "Germany", bitrates = setOf("128")),
+            countries = listOf("Germany", "France", "United States", "United Kingdom", "Japan", "Brazil"),
+            tags = listOf("ambient", "jazz", "rock", "electronic", "classical", "news"),
+            languages = listOf("english", "german", "french", "spanish")
+        )
     }
 }

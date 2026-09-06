@@ -7,10 +7,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 private val NothingRed = Color(0xFFFF2D2D)
@@ -218,5 +220,31 @@ fun MiniWaveVisualizer(
                 cornerRadius = androidx.compose.ui.geometry.CornerRadius(1f, 1f)
             )
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0AL, name = "Dot matrix visualizer states")
+@Composable
+private fun DotMatrixVisualizerPreview() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        DotMatrixVisualizer(isPlaying = true, isBuffering = false, modifier = Modifier.fillMaxWidth().height(120.dp))
+        DotMatrixVisualizer(isPlaying = false, isBuffering = true, modifier = Modifier.fillMaxWidth().height(120.dp))
+        DotMatrixVisualizer(isPlaying = false, isBuffering = false, modifier = Modifier.fillMaxWidth().height(120.dp))
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0A0A0AL, name = "Mini wave visualizer states")
+@Composable
+private fun MiniWaveVisualizerPreview() {
+    Row(
+        modifier = Modifier.padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        MiniWaveVisualizer(isPlaying = true)
+        MiniWaveVisualizer(isPlaying = false)
     }
 }

@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.domain.model.Playlist
@@ -47,6 +48,9 @@ import com.radiothing.ui.theme.Ndot57
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.theme.RadioThingTheme
+import com.radiothing.ui.preview.previewPlaylists
+import com.radiothing.ui.preview.previewStation
 
 /**
  * Add-to-playlist picker — "SEND TO TRAY". Shows all playlists with live counts,
@@ -181,5 +185,20 @@ fun AddToPlaylistSheet(
             }
             Spacer(Modifier.height(20.dp))
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, device = "spec:width=412dp,height=915dp", name = "Add to playlist sheet")
+@Composable
+private fun AddToPlaylistSheetPreview() {
+    RadioThingTheme {
+        AddToPlaylistSheet(
+            station = previewStation(),
+            playlists = previewPlaylists,
+            counts = mapOf(1L to 12, 2L to 3, 3L to 0),
+            onAddTo = {},
+            onCreateAndAdd = {},
+            onDismiss = {}
+        )
     }
 }

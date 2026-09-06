@@ -16,8 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.radiothing.domain.model.PlayerState
 import com.radiothing.ui.common.EmptyState
 import com.radiothing.ui.common.EmptyStateType
 import com.radiothing.ui.components.StationListItem
@@ -27,7 +29,9 @@ import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
+import com.radiothing.ui.theme.RadioThingTheme
 import com.radiothing.ui.common.LocalBottomClearance
+import com.radiothing.ui.preview.previewStations
 import kotlinx.coroutines.launch
 
 @Composable
@@ -38,6 +42,30 @@ fun HistoryScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playerStateState = playerManager.playerState.collectAsStateWithLifecycle()
+
+    HistoryContent(
+        isLoading = uiState.isLoading,
+        history = uiState.history,
+        playerStateState = playerStateState,
+        onStationClick = { uuid ->
+            viewModel.playStation(uuid)
+            onStationClick(uuid)
+        },
+        onToggleFavorite = viewModel::toggleFavorite,
+        onClearHistory = viewModel::clearHistory
+    )
+}
+
+/** Stateless body of the history screen — hoisted out so it can be previewed without a ViewModel. */
+@Composable
+private fun HistoryContent(
+    isLoading: Boolean,
+    history: List<com.radiothing.domain.model.RadioStation>,
+    playerStateState: State<PlayerState>,
+    onStationClick: (String) -> Unit,
+    onToggleFavorite: (com.radiothing.domain.model.RadioStation) -> Unit,
+    onClearHistory: () -> Unit
+) {
     var showClearConfirm by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -78,7 +106,7 @@ fun HistoryScreen(
                         )
                     }
                 }
-                if (uiState.history.isNotEmpty()) {
+                if (history.isNotEmpty()) {
                     TextButton(
                         onClick = { showClearConfirm = true },
                         shape = RoundedCornerShape(10.dp),
@@ -97,24 +125,24 @@ fun HistoryScreen(
             when {
                 // Loading skeleton until the first Room emission — an empty list
                 // before that is "not loaded yet", not "no history"
-                uiState.isLoading -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
-                uiState.history.isEmpty() -> EmptyState(type = EmptyStateType.NO_HISTORY, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
+                isLoading -> StationListSkeleton(Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
+                history.isEmpty() -> EmptyState(type = EmptyStateType.NO_HISTORY, modifier = Modifier.fillMaxSize().padding(bottom = LocalBottomClearance.current))
                 else -> LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(bottom = LocalBottomClearance.current, top = 4.dp)
                 ) {
-                    items(uiState.history, key = { it.stationUuid }, contentType = { "station" }) { station ->
+                    items(history, key = { it.stationUuid }, contentType = { "station" }) { station ->
                         val isPlaying by remember(station.stationUuid) {
                             derivedStateOf {
                                 val ps = playerStateState.value
                                 ps.currentStation?.stationUuid == station.stationUuid && ps.isPlaying
                             }
                         }
-                        val stationClick = remember(station.stationUuid) { { viewModel.playStation(station.stationUuid); onStationClick(station.stationUuid) } }
+                        val stationClick = remember(station.stationUuid) { { onStationClick(station.stationUuid) } }
                         // Keyed on the whole station: the history flow can replace
                         // the object for the same uuid, and the lambda must not
                         // act on a stale instance
-                        val favClick = remember(station) { { viewModel.toggleFavorite(station) } }
+                        val favClick = remember(station) { { onToggleFavorite(station) } }
                         StationListItem(
                             station = station,
                             isPlaying = isPlaying,
@@ -133,7 +161,7 @@ fun HistoryScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         showClearConfirm = false
-                        viewModel.clearHistory()
+                        onClearHistory()
                         scope.launch { snackbarHostState.showSnackbar("Log cleared") }
                     }) { Text("CLEAR", color = BrightRed, fontFamily = Ndot57, fontWeight = FontWeight.Bold) }
                 },
@@ -145,5 +173,37 @@ fun HistoryScreen(
             )
         }
         SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = LocalBottomClearance.current + 12.dp))
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Loaded")
+@Composable
+private fun HistoryScreenLoadedPreview() {
+    RadioThingTheme {
+        HistoryContent(
+            isLoading = false,
+            history = previewStations,
+            playerStateState = remember {
+                mutableStateOf(PlayerState(currentStation = previewStations[1], isPlaying = true))
+            },
+            onStationClick = {},
+            onToggleFavorite = {},
+            onClearHistory = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000L, device = "spec:width=412dp,height=915dp", name = "Empty")
+@Composable
+private fun HistoryScreenEmptyPreview() {
+    RadioThingTheme {
+        HistoryContent(
+            isLoading = false,
+            history = emptyList(),
+            playerStateState = remember { mutableStateOf(PlayerState()) },
+            onStationClick = {},
+            onToggleFavorite = {},
+            onClearHistory = {}
+        )
     }
 }

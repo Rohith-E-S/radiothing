@@ -1,12 +1,17 @@
 package com.radiothing.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -147,6 +152,26 @@ fun DotMatrixIcon(
                             y = startY + row * spacing
                         )
                     )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "All glyphs")
+@Composable
+private fun DotMatrixIconAllPreview() {
+    Column(
+        modifier = Modifier.padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        listOf(
+            listOf(IconType.BROWSE, IconType.FAVORITES, IconType.PLAYLISTS, IconType.HISTORY, IconType.SETTINGS),
+            listOf(IconType.FILTER, IconType.PLAY, IconType.PAUSE, IconType.PREV, IconType.NEXT)
+        ).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                row.forEach { type ->
+                    DotMatrixIcon(type = type, size = 24.dp, color = Color.White)
                 }
             }
         }

@@ -28,6 +28,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,8 @@ import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Ink
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite70
+import com.radiothing.ui.theme.RadioThingTheme
+import com.radiothing.ui.preview.previewStation
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -221,3 +224,47 @@ fun MiniPlayer(
         }
     }
 }
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "Playing with queue")
+@Composable
+private fun MiniPlayerPlayingPreview() {
+    RadioThingTheme {
+        MiniPlayer(
+            playerState = PlayerState(
+                currentStation = previewStation(),
+                isPlaying = true,
+                queue = previewQueue(),
+                queueIndex = 0
+            ),
+            onPlayPauseClick = {}, onExpandClick = {}, onNext = {}, onPrevious = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "Paused")
+@Composable
+private fun MiniPlayerPausedPreview() {
+    RadioThingTheme {
+        MiniPlayer(
+            playerState = PlayerState(currentStation = previewStation(name = "FIP")),
+            onPlayPauseClick = {}, onExpandClick = {}, onNext = {}, onPrevious = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "Buffering")
+@Composable
+private fun MiniPlayerBufferingPreview() {
+    RadioThingTheme {
+        MiniPlayer(
+            playerState = PlayerState(currentStation = previewStation(), isBuffering = true),
+            onPlayPauseClick = {}, onExpandClick = {}, onNext = {}, onPrevious = {}
+        )
+    }
+}
+
+private fun previewQueue() = listOf(
+    previewStation(),
+    previewStation(uuid = "preview-2", name = "NTS Radio 1"),
+    previewStation(uuid = "preview-3", name = "FIP")
+)

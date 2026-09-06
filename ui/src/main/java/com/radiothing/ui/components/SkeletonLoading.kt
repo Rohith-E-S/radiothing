@@ -26,11 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import com.radiothing.ui.theme.Ndot57
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.ui.theme.RadioColors
 import com.radiothing.ui.theme.RadioShapes
+import com.radiothing.ui.theme.RadioThingTheme
 
 @Composable
 fun StationListSkeleton(modifier: Modifier = Modifier) {
@@ -39,6 +41,14 @@ fun StationListSkeleton(modifier: Modifier = Modifier) {
             SkeletonItem()
             Spacer(modifier = Modifier.height(10.dp))
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050507L, name = "List skeleton")
+@Composable
+private fun StationListSkeletonPreview() {
+    RadioThingTheme {
+        StationListSkeleton(Modifier.padding(16.dp))
     }
 }
 
