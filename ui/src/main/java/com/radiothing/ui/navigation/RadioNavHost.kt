@@ -102,9 +102,8 @@ fun TabPager(
         state = pagerState,
         modifier = modifier,
         userScrollEnabled = true,
-        // 0 keeps off-screen pages from running InfiniteTransitions/Canvas
-        // at 120Hz while still preserving scroll position via pagerState.
-        beyondBoundsPageCount = 0,
+        // Off-screen pages stay composed (default) but idle; scroll position
+        // survives via pagerState.
         key = { idx -> TOP_LEVEL_TABS[idx].route }
     ) { page ->
         when (TOP_LEVEL_TABS[page]) {

@@ -1,39 +1,31 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
 
 android {
     namespace = "com.radiothing.ui"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 30
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
-        // Compose stability config — RadioStation + List treated stable → rows skip recomposition
-        freeCompilerArgs += listOf(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:stabilityConfigurationPath=${project.rootDir}/ui/stability_config.txt"
-        )
-    }
-
     buildFeatures {
         compose = true
     }
+}
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
-    }
+kotlin {
+    jvmToolchain(17)
+}
+
+// Compose stability config — RadioStation + List treated stable → rows skip recomposition
+composeCompiler {
+    stabilityConfigurationFile = rootProject.layout.projectDirectory.file("ui/stability_config.txt")
 }
 
 dependencies {
