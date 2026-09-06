@@ -41,8 +41,6 @@ import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
 
-private val SLUG_REGEX = Regex("[^a-z0-9]+")
-
 // Hoisted shapes to avoid allocation per row
 private val ThumbShape = RoundedCornerShape(10.dp)
 private val CardShape = RoundedCornerShape(12.dp)
@@ -55,9 +53,6 @@ fun countryCodeToEmoji(countryCode: String): String {
     return String(Character.toChars(firstLetter)) + String(Character.toChars(secondLetter))
 }
 
-private fun slugify(name: String): String {
-    return name.lowercase().replace(SLUG_REGEX, "-").trim('-').take(22).ifEmpty { "station" }
-}
 
 private fun formatVotes(votes: Int): String {
     return when {
@@ -217,47 +212,6 @@ private fun ArtworkThumb(
     }
 }
 
-@Composable
-private fun SpecPill(
-    label: String,
-    value: String,
-    isPrimary: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    val bg = if (isPrimary) BrightRed.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.04f)
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(3.dp))
-            .background(bg)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            if (label.isNotEmpty()) {
-                Text(
-                    text = label,
-                    color = if (isPrimary) BrightRed.copy(alpha = 0.7f) else TextWhite35,
-                    fontFamily = Ndot57,
-                    fontSize = 8.5.sp,
-                    letterSpacing = 0.2.sp,
-                    style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                )
-            }
-            Text(
-                text = value,
-                color = if (isPrimary) BrightRed else TextWhite70,
-                fontFamily = Ndot57,
-                fontSize = 9.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.3.sp,
-                style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-            )
-        }
-    }
-}
 
 @Composable
 private fun PlaceholderContent(flag: String, initials: String) {
@@ -289,42 +243,63 @@ fun StationListItem(
     onFavoriteClick: () -> Unit,
     showIcon: Boolean = true,
     compactMode: Boolean = false,
-    /**
-     * Optional extra control rendered in the top row before the heart, in its
-     * own lane. Used by screens that need a second row action (e.g. playlist
-     * detail's remove button) without overlaying it on the heart's touch
-     * target — an overlay won both the pixels and the pointer input.
-     */
+    /** Extra row action, such as removing a station from a playlist. */
     trailingTopContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val tags = remember(station.tags) {
-        station.tags.split(",").map { it.trim() }.filter { it.isNotEmpty() }.take(2)
-    }
-    val slug = remember(station.name) { slugify(station.name) }
-    val rateSuffix = remember(station.bitrate, station.codec) {
-        if (station.bitrate > 0) "${station.bitrate} KBPS" else station.codec.uppercase().ifEmpty { "STREAM" }
-    }
-    val votesLabel = remember(station.votes) { formatVotes(station.votes) }
-    val titleUpper = remember(station.name) { station.name.uppercase() }
+    val title = remember(station.name) { station.name.trim().uppercase() }
+    val metadata = remember(
+        station.countryCode,
+        station.country,
+        station.codec,
+        station.bitrate,
+        station.tags
+    ) {
+        val location = station.countryCode
+            .takeIf { it.isNotBlank() }
+            ?.let { "${countryCodeToEmoji(it)} ${it.uppercase()}" }
+            ?: station.country.takeIf { it.isNotBlank() }?.uppercase()
+        val format = buildList {
+            station.codec.takeIf { it.isNotBlank() }?.let { add(it.uppercase()) }
+            if (station.bitrate > 0) add("${station.bitrate} KBPS")
+        }.joinToString(" / ").ifEmpty { "LIVE STREAM" }
+        val genre = station.tags
+            .split(',')
+            .firstOrNull { it.isNotBlank() }
+            ?.trim()
+            ?.uppercase()
 
-    val borderColor = if (isPlaying) BrightRed.copy(alpha = 0.7f) else GridLine.copy(alpha = 0.45f)
-    val cardBg = if (isPlaying) Panel.copy(alpha = 0.95f) else Panel
-    val artworkSize = 62.dp
+        listOfNotNull(location, format, genre).joinToString("  •  ")
+    }
+    val votesLabel = remember(station.votes) { "${formatVotes(station.votes)} VOTES" }
+    val borderColor = if (isPlaying) BrightRed.copy(alpha = 0.72f) else GridLine.copy(alpha = 0.7f)
+    val cardBackground = if (isPlaying) Color(0xFF17171A) else Panel
+    val noFontPadding = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .clip(CardShape)
-            .background(cardBg)
+            .background(cardBackground)
             .border(1.dp, borderColor, CardShape)
-            .clickable(onClick = onStationClick)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .clickable(onClickLabel = "Play ${station.name}", onClick = onStationClick)
     ) {
+        // A receiver-style tuning rail makes the active station identifiable
+        // before the user has to read any text.
+        Box(modifier = Modifier.matchParentSize()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .width(if (isPlaying) 3.dp else 1.dp)
+                    .fillMaxHeight()
+                    .background(if (isPlaying) BrightRed else GridLine)
+            )
+        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = artworkSize),
+                .padding(start = 10.dp, end = 6.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             ArtworkThumb(station = station, isPlaying = isPlaying, showCachedIcon = showIcon)
@@ -334,149 +309,109 @@ fun StationListItem(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    // min, not fixed: the 48dp favorite touch target + title +
-                    // pill row need ~80dp. A hard 62dp coerced the title to a
-                    // clipped ~14dp and the pill/status row to zero height.
-                    .heightIn(min = 62.dp),
+                    .heightIn(min = 58.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top Row: Slug + Favorite
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = "STN://",
-                            color = BrightRed.copy(alpha = 0.8f),
-                            fontFamily = Ndot57,
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.1.sp,
-                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                        )
-                        Text(
-                            text = slug,
-                            color = TextWhite35,
-                            fontFamily = Ndot57,
-                            fontSize = 9.sp,
-                            letterSpacing = 0.1.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                        )
-                    }
+                    Text(
+                        text = title,
+                        color = Color.White,
+                        fontFamily = Ndot57,
+                        fontSize = if (compactMode) 14.sp else 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.25.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = noFontPadding,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                    trailingTopContent?.invoke()
-
-                    // 48dp touch target (a11y minimum) wraps a 16dp visual icon.
-                    // The parent Row's clickable stays untouched — Compose routes
-                    // touches to the deepest clickable, so the row click won't fire
-                    // when the user taps the heart.
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .semantics {
-                                contentDescription = if (station.isFavorite) "Remove from favorites" else "Add to favorites"
+                    if (isPlaying) {
+                        Spacer(Modifier.width(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            if (!compactMode) {
+                                AudioEqualizerBars(
+                                    isPlaying = true,
+                                    barCount = 4,
+                                    barWidth = 2.dp,
+                                    maxHeight = 11.dp
+                                )
                             }
-                            .clickable(onClick = onFavoriteClick),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (station.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            tint = if (station.isFavorite) BrightRed else TextWhite35,
-                            modifier = Modifier.size(16.dp)
-                        )
+                            Text(
+                                text = "LIVE",
+                                color = BrightRed,
+                                fontFamily = Ndot57,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                style = noFontPadding
+                            )
+                        }
                     }
                 }
 
-                // Station Title — centred between top and bottom rows, no extra spacer
                 Text(
-                    text = titleUpper,
-                    color = Color.White,
+                    text = metadata,
+                    color = TextWhite70,
                     fontFamily = Ndot57,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.3.sp,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 0.25.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                    style = noFontPadding,
+                    modifier = Modifier.padding(top = 0.dp)
                 )
 
-                // Bottom Row: Spec Pills + Status (aligned to bottom) — allow pills to breathe, avoid cutoff
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    // Left: Spec Pills — centred, weight so they truncate gracefully instead of pushing status off-screen
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        if (station.countryCode.isNotEmpty()) {
-                            SpecPill(label = "LOC", value = station.countryCode.uppercase())
-                        }
-                        SpecPill(label = "AUD", value = rateSuffix, isPrimary = isPlaying)
-                        tags.firstOrNull()?.let { tag ->
-                            SpecPill(label = "", value = tag.uppercase())
-                        }
-                    }
-                    Spacer(Modifier.width(10.dp))
+                Text(
+                    text = votesLabel,
+                    color = TextWhite35,
+                    fontFamily = Ndot57,
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.65.sp,
+                    style = noFontPadding,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
 
-                    // Right: Status
-                    val statusRow: @Composable () -> Unit = {
-                        Text(
-                            text = if (isPlaying) "ON AIR" else "STANDBY",
-                            color = if (isPlaying) BrightRed else TextWhite35,
-                            fontFamily = Ndot57,
-                            fontSize = 7.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.4.sp,
-                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                        )
-                        Text(
-                            text = votesLabel,
-                            color = TextWhite70,
-                            fontFamily = Ndot57,
-                            fontSize = 8.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.1.sp,
-                            style = TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
-                        )
-                    }
-                    if (compactMode) {
-                        // Browse list — keep just the status + votes, drop the animated bars
-                        // (rows are dense and 120Hz bars across 20 visible rows eat frame budget)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) { statusRow() }
-                    } else {
-                        // Favorites/History — equalizer bars make sense (fewer rows, scene-driven)
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            AudioEqualizerBars(isPlaying = isPlaying, barCount = 4, barWidth = 2.dp, maxHeight = 10.dp)
-                            statusRow()
+            Spacer(Modifier.width(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                trailingTopContent?.invoke()
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .semantics {
+                            contentDescription = if (station.isFavorite) {
+                                "Remove ${station.name} from favorites"
+                            } else {
+                                "Add ${station.name} to favorites"
+                            }
                         }
-                    }
+                        .clickable(onClick = onFavoriteClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (station.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (station.isFavorite) BrightRed else TextWhite35,
+                        modifier = Modifier.size(19.dp)
+                    )
                 }
             }
         }
     }
 }
 
-// region Previews
 
 @Preview(showBackground = true, backgroundColor = 0xFF050507L)
 @Composable
