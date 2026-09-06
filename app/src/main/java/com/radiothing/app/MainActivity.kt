@@ -114,10 +114,11 @@ class MainActivity : ComponentActivity() {
                             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         }
                     }
-                    // NOTE: RECORD_AUDIO is deliberately NOT requested at cold start.
-                    // It's only needed for the Now Playing visualizer and is requested
-                    // contextually from StreamVisualizer on first open, with a graceful
-                    // fallback to the simulated waveform when denied.
+                    // No RECORD_AUDIO request here — and none anywhere: the
+                    // Now Playing visualizer taps the player's own PCM output
+                    // (SpectrumTapProcessor), which needs no permission. The
+                    // manifest no longer declares mic access, so the store
+                    // listing shows no "Microphone" permission.
                 }
 
                 LaunchedEffect(playerState.error) {

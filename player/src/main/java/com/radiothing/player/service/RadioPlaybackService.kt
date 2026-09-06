@@ -16,6 +16,7 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
@@ -115,7 +116,27 @@ class RadioPlaybackService : MediaSessionService() {
         val httpFactory = StreamHttpDataSourceFactory.create()
         val mediaSourceFactory = buildMediaSourceFactory(httpFactory)
 
-        exoPlayer = ExoPlayer.Builder(this)
+        // PCM tap feeding the Now Playing visualizer — no RECORD_AUDIO needed.
+        // Injected through a custom RenderersFactory because the audio sink is
+        // built there (buildAudioSink) in current Media3.
+        val spectrumTap = com.radiothing.player.visualizer.SpectrumTapProcessor { bins ->
+            playerManager.onServiceSpectrumBins(bins)
+        }
+        val renderersFactory = object : DefaultRenderersFactory(this) {
+            override fun buildAudioSink(
+                context: Context,
+                enableFloatOutput: Boolean,
+                enableAudioTrackPlaybackParams: Boolean
+            ): androidx.media3.exoplayer.audio.AudioSink {
+                return androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
+                    .setAudioProcessors(arrayOf(spectrumTap))
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                    .build()
+            }
+        }
+
+        exoPlayer = ExoPlayer.Builder(this, renderersFactory)
             .setLoadControl(loadControl)
             .setMediaSourceFactory(mediaSourceFactory)
             .setAudioAttributes(audioAttributes, /* handleAudioFocus= */ true)
@@ -223,7 +244,7 @@ class RadioPlaybackService : MediaSessionService() {
                 "radio_playback",
                 R.string.radio_playback_channel_name
             )
-            try { provider.setSmallIcon(android.R.drawable.ic_media_play) } catch (_: Exception) {}
+            try { provider.setSmallIcon(R.drawable.ic_stat_playback) } catch (_: Exception) {}
             setMediaNotificationProvider(provider)
         } catch (_: Exception) {}
 

@@ -33,7 +33,7 @@ class NowPlayingViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository
 ) : ViewModel() {
 
-    val audioSessionId: StateFlow<Int> = playerManager.audioSessionId
+    val spectrumBins: StateFlow<FloatArray?> = playerManager.spectrumBins
 
     val playlists: StateFlow<List<Playlist>> = playlistRepository.getPlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

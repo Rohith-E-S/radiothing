@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
@@ -133,22 +134,11 @@ private fun BrowseContent(
 ) {
     var showFilters by remember { mutableStateOf(false) }
 
-    // Pull-to-refresh kept but will be attached only when list is idle at top (see BrowseStationList)
-    // — avoids nestedScroll dispatch on every scroll frame at 120Hz. Trades instant pull sensitivity for butter.
+    // Pull-to-refresh: the gesture is owned by PullToRefreshBox inside
+    // BrowseStationList; refresh end is driven by uiState.isRefreshing
+    // flipping false (the box animates the indicator away itself).
     val pullState = rememberPullToRefreshState()
     val canPullRefresh = !uiState.isLoading && !uiState.isLoadingMore
-
-    // Gesture → one refresh; end as soon as VM's isRefreshing resolves
-    if (pullState.isRefreshing) {
-        LaunchedEffect(true) {
-            onRefresh()
-        }
-    }
-    LaunchedEffect(uiState.isRefreshing) {
-        if (!uiState.isRefreshing && pullState.isRefreshing) {
-            pullState.endRefresh()
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -204,6 +194,8 @@ private fun BrowseContent(
                             iconReadyState = iconReadyState,
                             playerStateState = playerStateState,
                             onLoadMore = onLoadMore,
+                            onRefresh = onRefresh,
+                            isRefreshing = uiState.isRefreshing,
                             onStationClick = onStationClick,
                             onFavoriteClick = onFavoriteClick,
                             pullState = pullState,
@@ -434,6 +426,8 @@ private fun BrowseStationList(
     pullState: PullToRefreshState,
     canPullRefresh: Boolean,
     onLoadMore: () -> Unit,
+    onRefresh: () -> Unit,
+    isRefreshing: Boolean,
     onStationClick: (String) -> Unit,
     onFavoriteClick: (RadioStation) -> Unit
 ) {
@@ -466,7 +460,8 @@ private fun BrowseStationList(
         if (shouldLoadMore) throttledLoadMore()
     }
 
-    // Gate nestedScroll to top only + idle — no intercept while scrolling/flinging at 120Hz.
+    // Pill drag feedback is gated to idle-at-top; the pull gesture itself is
+    // owned by PullToRefreshBox.
     val isAtTop by remember {
         derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
     }
@@ -474,11 +469,15 @@ private fun BrowseStationList(
         derivedStateOf { isAtTop && !listState.isScrollInProgress }
     }
     val effectiveCanPull = canPullRefresh && isIdleAtTop
-    val nestedScroll = if (effectiveCanPull) {
-        Modifier.nestedScroll(pullState.nestedScrollConnection)
-    } else Modifier
 
-    Box(modifier = nestedScroll.fillMaxSize()) {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = onRefresh,
+        state = pullState,
+        // Custom tuning pill below replaces the stock circular indicator
+        indicator = {},
+        modifier = Modifier.fillMaxSize()
+    ) {
         LazyColumn(
             state = listState,
             verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -545,9 +544,9 @@ private fun BrowseStationList(
         }
         // Visible during the whole pull gesture, not just after release —
         // previously the drag gave zero feedback until isRefreshing flipped.
-        val pullFraction = if (effectiveCanPull) pullState.progress else 0f
-        if (pullState.isRefreshing || pullFraction > 0f) {
-            val dragging = !pullState.isRefreshing
+        val pullFraction = if (effectiveCanPull) pullState.distanceFraction else 0f
+        if (isRefreshing || pullFraction > 0f) {
+            val dragging = !isRefreshing
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
@@ -563,7 +562,7 @@ private fun BrowseStationList(
                 contentAlignment = Alignment.Center
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (pullState.isRefreshing) {
+                    if (isRefreshing) {
                         CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = BrightRed)
                         Spacer(Modifier.width(8.dp))
                     }
