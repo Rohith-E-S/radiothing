@@ -4,6 +4,8 @@ A dot-matrix internet radio player for Android, styled like an instrument panel 
 
 **Open • Free • No ads • No trackers**
 
+[![Download](https://img.shields.io/github/v/release/Rohith-E-S/radiothing?label=download&sort=semver)](https://github.com/Rohith-E-S/radiothing/releases/latest)
+
 ## Features
 
 - **Browse** — search and filter the radio-browser.info directory by country, genre/tag, language, bitrate, and codec; pull-to-refresh and endless pagination
@@ -19,6 +21,7 @@ A dot-matrix internet radio player for Android, styled like an instrument panel 
 
 - **F-Droid:** coming soon
 - **Google Play:** published as RadioThing
+- **APK:** grab the latest from the [Releases page](https://github.com/Rohith-E-S/radiothing/releases) and install directly (Android 11+). Point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for auto-updates.
 - Or build from source:
 
 ```bash
@@ -42,6 +45,16 @@ The project is a standard Gradle build with Kotlin DSL:
 | `:player` | ExoPlayer/Media3 playback engine                 |
 
 Release signing is optional for local builds — see [docs/release-signing.md](docs/release-signing.md). Without `keystore.properties` the release build is simply unsigned.
+
+```bash
+./gradlew :app:assembleRelease
+```
+
+Requires JDK 17+ (the Gradle daemon JVM is pinned via `gradle/gradle-daemon-jvm.properties`).
+
+## Privacy
+
+No account, no analytics, no ads, no tracking. Favorites, playlists, history and settings never leave your device. Station data comes from the public [radio-browser.info](https://www.radio-browser.info) directory; audio streams come directly from the stations themselves.
 
 ## License
 
