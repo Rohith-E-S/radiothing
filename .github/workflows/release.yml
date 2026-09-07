@@ -54,6 +54,12 @@ jobs:
       - name: Build signed release APK
         run: ./gradlew :app:test :app:assembleRelease --stacktrace -PversionCode=${{ github.run_number }} -PversionName=1.0.${{ github.run_number }}
 
+      - name: Rename APK for release
+        run: |
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          mv "$APK" "app/build/outputs/apk/release/radiothing-1.0.${{ github.run_number }}.apk"
+          ls app/build/outputs/apk/release/
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
