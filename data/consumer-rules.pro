@@ -1,5 +1,3 @@
-# Add project specific ProGuard rules here.
-
 # Preserve annotations and type signatures for reflection
 -keepattributes Signature, InnerClasses, EnclosingMethod, RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations, AnnotationDefault
 
@@ -25,6 +23,3 @@
 
 # Room
 -keep class com.radiothing.data.db.entity.** { *; }
-
-# Domain models
--keep class com.radiothing.domain.model.** { *; }

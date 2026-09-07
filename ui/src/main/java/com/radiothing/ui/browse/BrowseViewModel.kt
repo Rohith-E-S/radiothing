@@ -227,6 +227,7 @@ class BrowseViewModel @Inject constructor(
                 prefetchIcons(stations)
                 applyFiltersInternal()
             } catch (e: Exception) {
+                android.util.Log.e("BrowseViewModel", "loadPage failed", e)
                 _uiState.value = _uiState.value.copy(isLoading = false, isRefreshing = false, error = friendlyError(e))
             }
         }
