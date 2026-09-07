@@ -21,7 +21,7 @@ A dot-matrix internet radio player for Android, styled like an instrument panel 
 
 - **F-Droid:** coming soon
 - **Google Play:** published as RadioThing
-- **APK:** grab the latest from the [Releases page](https://github.com/Rohith-E-S/radiothing/releases) and install directly (Android 11+). Point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for auto-updates.
+- **APK:** grab the latest from the [Releases page](https://github.com/Rohith-E-S/radiothing/releases/latest) and install directly (Android 11+). Point [Obtainium](https://github.com/ImranR98/Obtainium) at this repo for auto-updates.
 - Or build from source:
 
 ```bash
