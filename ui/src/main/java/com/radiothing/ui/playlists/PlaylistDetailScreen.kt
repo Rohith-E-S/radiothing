@@ -40,7 +40,7 @@ import com.radiothing.ui.common.EmptyState
 import com.radiothing.ui.common.EmptyStateType
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.RadioThingTheme
@@ -113,7 +113,7 @@ private fun PlaylistDetailContent(
                 Text(
                     text = details?.playlist?.name?.uppercase() ?: "TRAY",
                     color = Color.White,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     letterSpacing = 1.sp,
@@ -123,7 +123,7 @@ private fun PlaylistDetailContent(
                 Text(
                     text = "$count SPECIMENS",
                     color = TextWhite35,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 9.sp,
                     letterSpacing = 1.sp
                 )

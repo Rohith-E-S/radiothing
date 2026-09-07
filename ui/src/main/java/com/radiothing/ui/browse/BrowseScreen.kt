@@ -54,7 +54,7 @@ import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Hairline
 import com.radiothing.ui.theme.Ink
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
@@ -237,7 +237,7 @@ private fun BrowseHeader(stationCount: Int) {
             Text(
                 text = "BROWSE",
                 color = Color.White,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 letterSpacing = 2.sp,
@@ -250,7 +250,7 @@ private fun BrowseHeader(stationCount: Int) {
                 Text(
                     text = "$stationCount",
                     color = BrightRed,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
                     letterSpacing = 0.8.sp,
@@ -260,7 +260,7 @@ private fun BrowseHeader(stationCount: Int) {
                 Text(
                     text = "AVAILABLE",
                     color = TextWhite35,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 8.sp,
                     letterSpacing = 0.8.sp,
                     modifier = Modifier.padding(bottom = 2.dp)
@@ -321,7 +321,7 @@ private fun BrowseFilterHints(query: String, onClearQuery: () -> Unit) {
             Text(
                 text = "QUERY “${query.uppercase().take(24)}”",
                 color = TextWhite35,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontSize = 10.sp,
                 letterSpacing = 0.8.sp
             )
@@ -329,7 +329,7 @@ private fun BrowseFilterHints(query: String, onClearQuery: () -> Unit) {
                 onClick = onClearQuery,
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Text("CLEAR", color = BrightRed, fontFamily = Ndot57, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("CLEAR", color = BrightRed, fontFamily = DotMatrix, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
@@ -348,7 +348,7 @@ private fun BrowseActiveFilters(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("FILTERS:", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp)
+            Text("FILTERS:", color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 0.8.sp)
             filters.country?.let {
                 FilterPill("IN ${it.uppercase()}")
             }
@@ -366,7 +366,7 @@ private fun BrowseActiveFilters(
             Text(
                 "CLEAR",
                 color = BrightRed,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.8.sp,
@@ -388,7 +388,7 @@ private fun FilterPill(text: String) {
             .background(BrightRed.copy(alpha = 0.14f))
             .border(1.dp, BrightRed, RoundedCornerShape(100.dp))
             .padding(horizontal = 8.dp, vertical = 2.dp)
-    ) { Text(text, color = BrightRed, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold) }
+    ) { Text(text, color = BrightRed, fontFamily = DotMatrix, fontSize = 9.sp, fontWeight = FontWeight.Bold) }
 }
 
 /** Inline load-more failure — the loaded list stays visible; retry is explicit. */
@@ -406,7 +406,7 @@ private fun LoadMoreErrorBanner(message: String, onRetry: () -> Unit) {
         Text(
             text = "$message — TAP TO RETRY",
             color = BrightRed,
-            fontFamily = Ndot57,
+            fontFamily = DotMatrix,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f, fill = false)
@@ -524,7 +524,7 @@ private fun BrowseStationList(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = BrightRed)
                             Spacer(Modifier.width(8.dp))
-                            Text("TUNING MORE…", color = TextWhite35, fontFamily = Ndot57, fontSize = 10.sp, letterSpacing = 1.sp)
+                            Text("TUNING MORE…", color = TextWhite35, fontFamily = DotMatrix, fontSize = 10.sp, letterSpacing = 1.sp)
                         }
                     }
                 }
@@ -533,7 +533,7 @@ private fun BrowseStationList(
                     Text(
                         "END OF SPECTRUM — ${stations.size} STATIONS",
                         color = TextWhite35,
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontSize = 9.sp,
                         letterSpacing = 1.sp,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -568,7 +568,7 @@ private fun BrowseStationList(
                     }
                     Text(
                         if (dragging) "PULL TO TUNE…" else "TUNING…",
-                        color = TextWhite70, fontFamily = Ndot57, fontSize = 10.sp, letterSpacing = 1.sp
+                        color = TextWhite70, fontFamily = DotMatrix, fontSize = 10.sp, letterSpacing = 1.sp
                     )
                 }
             }

@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -88,7 +88,7 @@ private fun HistoryContent(
                     Text(
                         text = "LOG",
                         color = Color.White,
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp,
                         letterSpacing = 2.5.sp
@@ -100,7 +100,7 @@ private fun HistoryContent(
                         Text(
                             text = "RECENTLY PLAYED  •  FIELD LOG",
                             color = TextWhite35,
-                            fontFamily = Ndot57,
+                            fontFamily = DotMatrix,
                             fontSize = 9.sp,
                             letterSpacing = 1.sp
                         )
@@ -113,7 +113,7 @@ private fun HistoryContent(
                         colors = ButtonDefaults.textButtonColors(contentColor = BrightRed),
                         modifier = Modifier.border(1.dp, BrightRed.copy(0.35f), RoundedCornerShape(10.dp))
                     ) {
-                        Text("CLEAR", color = BrightRed, fontFamily = Ndot57, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("CLEAR", color = BrightRed, fontFamily = DotMatrix, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                 }
             }
@@ -156,16 +156,16 @@ private fun HistoryContent(
         if (showClearConfirm) {
             AlertDialog(
                 onDismissRequest = { showClearConfirm = false },
-                title = { Text("CLEAR LOG?", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
-                text = { Text("Remove all recently played stations. Cannot be undone.", fontFamily = Ndot57, fontSize = 12.sp, color = TextWhite35) },
+                title = { Text("CLEAR LOG?", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
+                text = { Text("Remove all recently played stations. Cannot be undone.", fontFamily = DotMatrix, fontSize = 12.sp, color = TextWhite35) },
                 confirmButton = {
                     TextButton(onClick = {
                         showClearConfirm = false
                         onClearHistory()
                         scope.launch { snackbarHostState.showSnackbar("Log cleared") }
-                    }) { Text("CLEAR", color = BrightRed, fontFamily = Ndot57, fontWeight = FontWeight.Bold) }
+                    }) { Text("CLEAR", color = BrightRed, fontFamily = DotMatrix, fontWeight = FontWeight.Bold) }
                 },
-                dismissButton = { TextButton(onClick = { showClearConfirm = false }) { Text("CANCEL", fontFamily = Ndot57) } },
+                dismissButton = { TextButton(onClick = { showClearConfirm = false }) { Text("CANCEL", fontFamily = DotMatrix) } },
                 containerColor = Panel,
                 titleContentColor = Color.White,
                 textContentColor = Color(0xFFAAAAAA),

@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -80,14 +80,14 @@ private fun PlaylistsContent(
                     color = Color.White,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     letterSpacing = 2.5.sp
                 )
                 Spacer(Modifier.height(3.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(5.dp).clip(RoundedCornerShape(100.dp)).background(BrightRed))
                     Spacer(Modifier.width(6.dp))
-                    Text("${playlists.size} COLLECTIONS", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+                    Text("${playlists.size} COLLECTIONS", color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 1.sp)
                 }
             }
             Button(
@@ -96,7 +96,7 @@ private fun PlaylistsContent(
                 shape = RoundedCornerShape(12.dp),
                 contentPadding = PaddingValues(horizontal = 18.dp, vertical = 10.dp)
             ) {
-                Text("+ NEW", fontFamily = Ndot57, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp)
+                Text("+ NEW", fontFamily = DotMatrix, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.sp)
             }
         }
 
@@ -124,12 +124,12 @@ private fun PlaylistsContent(
         if (showCreate) {
             AlertDialog(
                 onDismissRequest = { showCreate = false },
-                title = { Text("NEW PLAYLIST", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
+                title = { Text("NEW PLAYLIST", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
                 text = {
                     OutlinedTextField(
                         value = newName,
                         onValueChange = { newName = it },
-                        placeholder = { Text("Name — e.g. NIGHT DRIVES", fontFamily = Ndot57, fontSize = 12.sp, color = TextWhite35) },
+                        placeholder = { Text("Name — e.g. NIGHT DRIVES", fontFamily = DotMatrix, fontSize = 12.sp, color = TextWhite35) },
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrightRed,
@@ -149,7 +149,7 @@ private fun PlaylistsContent(
                             showCreate = false
                         },
                         enabled = newName.isNotBlank()
-                    ) { Text("CREATE", fontFamily = Ndot57, fontWeight = FontWeight.Bold, color = BrightRed) }
+                    ) { Text("CREATE", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, color = BrightRed) }
                 },
                 dismissButton = {
                     TextButton(
@@ -158,7 +158,7 @@ private fun PlaylistsContent(
                             newName = ""
                             showCreate = false
                         }
-                    ) { Text("CANCEL", fontFamily = Ndot57) }
+                    ) { Text("CANCEL", fontFamily = DotMatrix) }
                 },
                 containerColor = Panel,
                 titleContentColor = Color.White,
@@ -169,17 +169,17 @@ private fun PlaylistsContent(
         deleteTarget?.let { playlist ->
             AlertDialog(
                 onDismissRequest = { deleteTarget = null },
-                title = { Text("DELETE TRAY?", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
-                text = { Text("\"${playlist.name.uppercase()}\" and its ${counts[playlist.id] ?: 0} specimens will be removed. Cannot be undone.", fontFamily = Ndot57, fontSize = 12.sp, color = TextWhite35) },
+                title = { Text("DELETE TRAY?", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp) },
+                text = { Text("\"${playlist.name.uppercase()}\" and its ${counts[playlist.id] ?: 0} specimens will be removed. Cannot be undone.", fontFamily = DotMatrix, fontSize = 12.sp, color = TextWhite35) },
                 confirmButton = {
                     TextButton(
                         onClick = {
                             onDeletePlaylist(playlist.id)
                             deleteTarget = null
                         }
-                    ) { Text("DELETE", fontFamily = Ndot57, fontWeight = FontWeight.Bold, color = BrightRed) }
+                    ) { Text("DELETE", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, color = BrightRed) }
                 },
-                dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("CANCEL", fontFamily = Ndot57) } },
+                dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("CANCEL", fontFamily = DotMatrix) } },
                 containerColor = Panel,
                 titleContentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
@@ -213,7 +213,7 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
                 text = playlist.name.take(2).uppercase(),
                 color = BrightRed,
                 fontSize = 14.sp,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -223,7 +223,7 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
                 text = playlist.name.uppercase(),
                 color = Color.White,
                 fontSize = 13.sp,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.4.sp,
                 maxLines = 1,
@@ -234,7 +234,7 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
                 text = "$count SPECIMENS",
                 color = TextWhite35,
                 fontSize = 10.sp,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 letterSpacing = 0.6.sp
             )
         }
@@ -243,7 +243,7 @@ fun PlaylistItem(playlist: Playlist, count: Int = 0, onClick: () -> Unit, onDele
                 text = "›",
                 color = TextWhite35,
                 fontSize = 18.sp,
-                fontFamily = Ndot57
+                fontFamily = DotMatrix
             )
         }
         Spacer(Modifier.width(8.dp))

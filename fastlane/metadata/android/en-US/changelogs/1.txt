@@ -1,0 +1,6 @@
+Initial release.
+
+• Browse, search and filter the radio-browser.info directory
+• Now Playing with live FFT dot equalizer, sleep timer and queue
+• Favorites with undo, listening history, playlists (trays)
+• Dot-matrix UI with the OFL-licensed Doto typeface

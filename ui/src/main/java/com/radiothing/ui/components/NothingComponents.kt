@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.sp
@@ -55,7 +55,7 @@ fun NothingTextField(
         placeholder = {
             Text(
                 text = placeholder,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 color = TextWhite35,
                 fontSize = 12.sp,
                 letterSpacing = 0.8.sp,
@@ -87,7 +87,7 @@ fun NothingTextField(
                 ) {
                     Text(
                         text = "GO",
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontSize = 11.sp,
@@ -121,7 +121,7 @@ fun NothingChip(
         Text(
             text = text,
             color = if (isSelected) Color.White else TextWhite70,
-            fontFamily = Ndot57,
+            fontFamily = DotMatrix,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.6.sp

@@ -1,0 +1,35 @@
+# F-Droid build metadata for com.radiothing.app
+#
+# This is the recipe to submit to fdroiddata (https://gitlab.com/fdroid/fdroiddata)
+# when opening the merge request that packages RadioThing. Keep it in sync with
+# the app module's versionCode/versionName, and tag the matching commit as v<versionName>.
+# The store listing (name, summary, description, changelogs, icon) is read
+# automatically from fastlane/metadata/android/ in this repository.
+
+Categories:
+  - Multimedia
+License: GPL-3.0-or-later
+AuthorName: Rohith E S
+SourceCode: https://github.com/Rohith-E-S/radiothing
+IssueTracker: https://github.com/Rohith-E-S/radiothing/issues
+Changelog: https://github.com/Rohith-E-S/radiothing/releases
+Donate: https://github.com/sponsors/Rohith-E-S
+
+Name: RadioThing
+Summary: Dot-matrix internet radio player
+
+RepoType: git
+Repo: https://github.com/Rohith-E-S/radiothing.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 1
+    commit: v1.0.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 1

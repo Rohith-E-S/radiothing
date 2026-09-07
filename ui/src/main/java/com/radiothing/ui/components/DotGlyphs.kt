@@ -23,7 +23,7 @@ import com.radiothing.ui.theme.BrightRed
 
 /**
  * Decorative chrome drawn with Canvas instead of block/sine text glyphs —
- * characters like █ ▓ ▒ ░ ∿ are absent from Ndot57, so text versions silently
+ * characters like █ ▓ ▒ ░ ∿ are absent from DotMatrix, so text versions silently
  * render in the system fallback font with mismatched width/baseline.
  */
 @Composable

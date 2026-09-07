@@ -28,7 +28,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -142,7 +142,7 @@ fun BottomNavBar(
                         Text(
                             text = item.label,
                             color = if (isSelected) Color.White else TextWhite35,
-                            fontFamily = Ndot57,
+                            fontFamily = DotMatrix,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                             fontSize = 8.5.sp,
                             letterSpacing = 0.8.sp,

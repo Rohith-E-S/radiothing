@@ -27,7 +27,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.radiothing.ui.theme.RadioColors
@@ -96,7 +96,7 @@ private fun SkeletonItem() {
 
         Column(modifier = Modifier.weight(1f)) {
             // Title placeholder — drawn bar (block glyphs are missing from
-            // Ndot57 and fell back to the system font)
+            // DotMatrix and fell back to the system font)
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.72f)

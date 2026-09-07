@@ -1,0 +1,22 @@
+RadioThing is an internet radio player styled like an instrument panel from a black lab bench: a dot-matrix typeface, hairline grids, and a CRT-style equalizer that dances to the stream's real audio spectrum.
+
+It tunes into the community-run radio-browser.info directory — tens of thousands of live stations worldwide.
+
+FEATURES
+
+• Browse and search the global station directory
+• Filter by country, genre, language, bitrate and codec
+• Live FFT-driven dot equalizer in Now Playing
+• Favorites with undo and an automatic listening log
+• Playlists ("trays") — play a whole tray as a queue
+• Sleep timer (5 / 15 / 30 / 60 min) with gentle fade-out
+• Mini player with swipe-up expand and queue navigation
+• Pull-to-refresh, endless pagination, offline-friendly caching
+
+PRIVACY
+
+• No ads, no trackers, no analytics
+• Only talks to radio-browser.info and the stations you play
+• No accounts, no permissions beyond network and playback
+
+Station data courtesy of the open radio-browser.info community. App code is GPL-3.0; the interface uses the OFL-licensed Doto typeface.

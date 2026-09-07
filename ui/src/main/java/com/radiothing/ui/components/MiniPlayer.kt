@@ -29,7 +29,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -130,7 +130,7 @@ fun MiniPlayer(
                     Text(
                         text = playerState.currentStation?.name?.uppercase() ?: "",
                         color = Color.White,
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         maxLines = 1,
@@ -144,7 +144,7 @@ fun MiniPlayer(
                         Text(
                             text = "TUNING${".".repeat(dotCount)}",
                             color = BrightRed,
-                            fontFamily = Ndot57,
+                            fontFamily = DotMatrix,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
@@ -155,7 +155,7 @@ fun MiniPlayer(
                         Text(
                             text = meta,
                             color = TextWhite70,
-                            fontFamily = Ndot57,
+                            fontFamily = DotMatrix,
                             fontSize = 10.sp,
                             maxLines = 1,
                             letterSpacing = 0.4.sp

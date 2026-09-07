@@ -25,7 +25,7 @@ import com.radiothing.ui.components.StationListItem
 import com.radiothing.ui.components.StationListSkeleton
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.RadioThingTheme
@@ -105,7 +105,7 @@ private fun FavoritesContent(
                 Text(
                     text = "FAVORITES",
                     color = Color.White,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp,
                     letterSpacing = 2.5.sp
@@ -117,7 +117,7 @@ private fun FavoritesContent(
                     Text(
                         text = "YOUR COLLECTION  •  SAVED SIGNALS",
                         color = TextWhite35,
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontSize = 9.sp,
                         letterSpacing = 1.sp
                     )
@@ -128,11 +128,11 @@ private fun FavoritesContent(
                     Text(
                         text = "${favorites.size}",
                         color = BrightRed,
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp
                     )
-                    Text("SAVED", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+                    Text("SAVED", color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 1.sp)
                 }
             }
         }

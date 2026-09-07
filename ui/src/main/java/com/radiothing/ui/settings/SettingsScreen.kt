@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -77,7 +77,7 @@ private fun SettingsContent(
         Text(
             text = "SETTINGS",
             color = Color.White,
-            fontFamily = Ndot57,
+            fontFamily = DotMatrix,
             fontWeight = FontWeight.Bold,
             fontSize = 22.sp,
             letterSpacing = 2.5.sp
@@ -86,7 +86,7 @@ private fun SettingsContent(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(5.dp).clip(RoundedCornerShape(100.dp)).background(BrightRed))
             Spacer(Modifier.width(6.dp))
-            Text("PREFERENCES  •  DEVICE", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+            Text("PREFERENCES  •  DEVICE", color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 1.sp)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -118,7 +118,7 @@ private fun SettingsContent(
                 Text(
                     text = "Use the timer control in Now Playing (5 / 15 / 30 / 60 min). Playback fades and stops.",
                     color = TextWhite70,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 11.sp,
                     lineHeight = 16.sp,
                     modifier = Modifier.padding(16.dp)
@@ -129,22 +129,22 @@ private fun SettingsContent(
             SettingsCard {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("VERSION", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
-                        Text(appVersion, color = Color.White, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("VERSION", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp, letterSpacing = 1.sp)
+                        Text(appVersion, color = Color.White, fontFamily = DotMatrix, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(Modifier.height(10.dp))
                     HorizontalDivider(color = GridLine)
                     Spacer(Modifier.height(10.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("API", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
-                        Text("RADIO-BROWSER.INFO", color = Color.White, fontFamily = Ndot57, fontSize = 11.sp)
+                        Text("API", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp, letterSpacing = 1.sp)
+                        Text("RADIO-BROWSER.INFO", color = Color.White, fontFamily = DotMatrix, fontSize = 11.sp)
                     }
                     Spacer(Modifier.height(10.dp))
                     HorizontalDivider(color = GridLine)
                     Spacer(Modifier.height(10.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("BUILD", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
-                        Text("BLACK LAB • 01", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("BUILD", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp, letterSpacing = 1.sp)
+                        Text("BLACK LAB • 01", color = BrightRed, fontFamily = DotMatrix, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -153,7 +153,7 @@ private fun SettingsContent(
             Text(
                 text = "RADIO.THING — OPEN  •  FREE  •  NO ADS",
                 color = TextWhite35,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold,
                 fontSize = 10.sp,
                 textAlign = TextAlign.Center,
@@ -171,7 +171,7 @@ fun SettingSectionHeader(title: String) {
     Text(
         text = title,
         color = BrightRed,
-        fontFamily = Ndot57,
+        fontFamily = DotMatrix,
         fontWeight = FontWeight.Bold,
         fontSize = 11.sp,
         letterSpacing = 2.sp,
@@ -206,9 +206,9 @@ fun SettingSwitch(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = Color.White, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Text(text = title, color = Color.White, fontFamily = DotMatrix, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
             if (subtitle != null) {
-                Text(text = subtitle, color = TextWhite35, fontFamily = Ndot57, fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
+                Text(text = subtitle, color = TextWhite35, fontFamily = DotMatrix, fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
@@ -245,8 +245,8 @@ fun SettingSlider(
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = title, color = Color.White, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Text(text = "${display.roundToInt()}$suffix", color = BrightRed, fontFamily = Ndot57, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = title, color = Color.White, fontFamily = DotMatrix, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = "${display.roundToInt()}$suffix", color = BrightRed, fontFamily = DotMatrix, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
         Slider(
             value = display.coerceIn(range.start, range.endInclusive),

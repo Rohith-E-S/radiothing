@@ -45,7 +45,7 @@ import com.radiothing.domain.model.StationOrder
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Ink
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
@@ -68,7 +68,7 @@ data class FilterSelection(
 private fun FilterSectionLabel(text: String) {
     Text(
         text = text,
-        fontFamily = Ndot57,
+        fontFamily = DotMatrix,
         fontSize = 10.sp,
         fontWeight = FontWeight.Bold,
         color = TextWhite35,
@@ -99,7 +99,7 @@ private fun FilterChipRow(
                     .clickable { onToggle(item) }
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
-                Text(item.uppercase(), color = if (isSelected) Color.White else TextWhite70, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
+                Text(item.uppercase(), color = if (isSelected) Color.White else TextWhite70, fontFamily = DotMatrix, fontSize = 11.sp, letterSpacing = 1.sp)
             }
         }
     }
@@ -127,7 +127,7 @@ private fun FilterChipRowSingle(
                     .clickable { onSelect(if (isSelected) null else item) }
                     .padding(horizontal = 14.dp, vertical = 8.dp)
             ) {
-                Text(item.uppercase(), color = if (isSelected) Color.White else TextWhite70, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 1.sp)
+                Text(item.uppercase(), color = if (isSelected) Color.White else TextWhite70, fontFamily = DotMatrix, fontSize = 11.sp, letterSpacing = 1.sp)
             }
         }
     }
@@ -188,7 +188,7 @@ fun FilterSheet(
         ) {
             Text(
                 text = "FILTERS",
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 color = Color.White,
@@ -199,7 +199,7 @@ fun FilterSheet(
             run {
                 FilterSectionLabel("COUNTRY  —  TUNE THE WORLD  •  OR TYPE COUNTRY: IN SEARCH")
                 if (countries.isEmpty()) {
-                    Text("LOADING COUNTRIES…", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                    Text("LOADING COUNTRIES…", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp)
                 } else {
                     FilterChipRowSingle(
                         options = countries.take(28),
@@ -208,14 +208,14 @@ fun FilterSheet(
                     )
                     if (selectedCountry != null && selectedCountry !in countries.take(28)) {
                         Spacer(Modifier.height(4.dp))
-                        Text("» ${selectedCountry!!.uppercase()}", color = BrightRed, fontFamily = Ndot57, fontSize = 10.sp)
+                        Text("» ${selectedCountry!!.uppercase()}", color = BrightRed, fontFamily = DotMatrix, fontSize = 10.sp)
                     }
                 }
 
                 Spacer(Modifier.height(16.dp))
                 FilterSectionLabel("TAG  —  GENRE SEARCH  •  OR TYPE TAG: IN SEARCH")
                 if (tags.isEmpty()) {
-                    Text("LOADING TAGS…", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                    Text("LOADING TAGS…", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp)
                 } else {
                     FilterChipRowSingle(
                         options = tags.take(28),
@@ -227,7 +227,7 @@ fun FilterSheet(
                 Spacer(Modifier.height(16.dp))
                 FilterSectionLabel("LANGUAGE  •  OR TYPE LANG: IN SEARCH")
                 if (languages.isEmpty()) {
-                    Text("LOADING LANGUAGES…", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                    Text("LOADING LANGUAGES…", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp)
                 } else {
                     FilterChipRowSingle(
                         options = languages.take(28),
@@ -284,7 +284,7 @@ fun FilterSheet(
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
                 ) {
-                    Text("CLEAR", fontFamily = Ndot57, fontSize = 11.sp)
+                    Text("CLEAR", fontFamily = DotMatrix, fontSize = 11.sp)
                 }
 
                 Button(
@@ -308,7 +308,7 @@ fun FilterSheet(
                         contentColor = Color.White
                     )
                 ) {
-                    Text("APPLY", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text("APPLY", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                 }
             }
             Spacer(Modifier.height(24.dp))

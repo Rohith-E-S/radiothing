@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import com.radiothing.ui.theme.BrightRed
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -28,7 +28,7 @@ fun ErrorState(
     modifier: Modifier = Modifier
 ) {
     // Glitch by permuting the word's own letters: block glyphs (█▓▒░) are
-    // missing from Ndot57 and fell back to the system font, jittering the
+    // missing from DotMatrix and fell back to the system font, jittering the
     // headline's width/baseline on every swap. Letters only — no reflow.
     var glitchText by remember { mutableStateOf("ERROR") }
 
@@ -55,14 +55,14 @@ fun ErrorState(
         verticalArrangement = Arrangement.Center
     ) {
         // Decorative "▓▒░" fades drawn on canvas — the text glyphs fell back
-        // to the system font and jittered against the Ndot57 letters
+        // to the system font and jittered against the DotMatrix letters
         Row(verticalAlignment = Alignment.CenterVertically) {
             com.radiothing.ui.components.BlockFade(color = BrightRed)
             Spacer(Modifier.width(10.dp))
             Text(
                 text = glitchText,
                 color = BrightRed,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 textAlign = TextAlign.Center
@@ -76,7 +76,7 @@ fun ErrorState(
         Text(
             text = message,
             color = BrightRed,
-            fontFamily = Ndot57,
+            fontFamily = DotMatrix,
             fontSize = 14.sp,
             textAlign = TextAlign.Center
         )
@@ -92,7 +92,7 @@ fun ErrorState(
             Text(
                 text = "[ RETRY ]",
                 color = BrightRed,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold
             )
         }

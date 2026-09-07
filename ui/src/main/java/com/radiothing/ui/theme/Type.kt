@@ -1,20 +1,45 @@
 package com.radiothing.ui.theme
 
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.radiothing.ui.R
 
-// Ndot57 — Nothing dot-matrix display face. Applied to every label, header and station name for instrument character.
-val Ndot57 = FontFamily(Font(R.font.ndot57_regular, FontWeight.Normal))
+// DotMatrix — Doto, a SIL OFL-licensed dot-matrix display face (© 2024 The Doto
+// Project Authors, see licenses/Doto-OFL.txt). Shipped as one variable TTF; each
+// FontWeight is pinned through the wght axis with the roundness axis maxed
+// (ROND 100) for the round-dot instrument look — the file's own default instance
+// is Black with square dots, so both axes are always set explicitly. Axis weights
+// sit one step above the requested weights so the rendered density matches the
+// app's original display face, which only shipped a single (regular) weight.
+@OptIn(ExperimentalTextApi::class)
+private fun dotMatrixFont(requested: FontWeight, axisWeight: Int) = Font(
+    R.font.doto_variable,
+    weight = requested,
+    variationSettings = FontVariation.Settings(
+        FontVariation.Setting("ROND", 100f),
+        FontVariation.Setting("wght", axisWeight.toFloat())
+    )
+)
 
-val TitleFont = Ndot57
-val MonoFont = Ndot57
+val DotMatrix = FontFamily(
+    dotMatrixFont(FontWeight.Normal, 500),
+    dotMatrixFont(FontWeight.Medium, 500),
+    dotMatrixFont(FontWeight.SemiBold, 600),
+    dotMatrixFont(FontWeight.Bold, 600),
+    dotMatrixFont(FontWeight.ExtraBold, 700),
+    dotMatrixFont(FontWeight.Black, 700)
+)
+
+val TitleFont = DotMatrix
+val MonoFont = DotMatrix
 val BodyFont = FontFamily.Default
-val DisplayFont = Ndot57
+val DisplayFont = DotMatrix
 
 val RadioTypography = Typography(
     displayLarge = TextStyle(

@@ -54,14 +54,14 @@ import com.radiothing.ui.theme.Ink
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.PureBlack
 import com.radiothing.ui.theme.TextWhite35
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.domain.model.RadioStation
 import com.radiothing.ui.theme.RadioThingTheme
 
 // ── BLACK LAB / OSCILLOSCOPE BENCH ──
 // Impeccable surface: whole surface inside BLACK LAB world, composition = Oscilloscope Lab Bench (dealt 4 lead, seed 2426ab76)
 // Thesis: radio as live specimen under the scope — CRT is the hero, not a card. Refuses stacked-card feed.
-// Pill everywhere (100dp), Ndot57, red = live only, grid = 1dp hairline.
+// Pill everywhere (100dp), DotMatrix, red = live only, grid = 1dp hairline.
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -152,7 +152,7 @@ private fun NowPlayingContent(
                             else -> "ARMED"
                         },
                         color = if (uiState.isPlaying) BrightRed else TextWhite35,
-                        fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp
+                        fontFamily = DotMatrix, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp
                     )
                 }
             }
@@ -171,8 +171,8 @@ private fun NowPlayingContent(
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(uiState.error ?: "", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    TextButton(onClick = { onTogglePlayPause() }) { Text("RETRY", color = BrightRed, fontFamily = Ndot57, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+                    Text(uiState.error ?: "", color = BrightRed, fontFamily = DotMatrix, fontSize = 11.sp, modifier = Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    TextButton(onClick = { onTogglePlayPause() }) { Text("RETRY", color = BrightRed, fontFamily = DotMatrix, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
                 }
             }
             Spacer(Modifier.height(5.dp))
@@ -191,14 +191,14 @@ private fun NowPlayingContent(
                     Spacer(Modifier.height(0.dp))
                     Text(
                         text = uiState.currentStation?.name?.uppercase() ?: "NO SPECIMEN",
-                        color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
+                        color = Color.White, fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 22.sp, letterSpacing = 0.8.sp, maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.height(2.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (uiState.currentStation?.country?.isNotEmpty() == true) {
                             Text(
                                 uiState.currentStation!!.country.uppercase(),
-                                color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, letterSpacing = 0.8.sp,
+                                color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp, letterSpacing = 0.8.sp,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 // shrink first — votes/tray stay pinned at natural width
                                 modifier = Modifier.weight(1f, fill = false)
@@ -206,7 +206,7 @@ private fun NowPlayingContent(
                         }
                         Spacer(Modifier.width(2.dp))
                         if ((uiState.currentStation?.votes ?: 0) > 0) {
-                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = Ndot57, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("♥ ${uiState.currentStation!!.votes}", color = BrightRed, fontFamily = DotMatrix, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -227,7 +227,7 @@ private fun NowPlayingContent(
                             .border(1.dp, GridLine, RoundedCornerShape(100.dp))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
                     ) {
-                        Text(tag.uppercase(), color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.6.sp)
+                        Text(tag.uppercase(), color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 0.6.sp)
                     }
                 }
             }
@@ -277,17 +277,17 @@ private fun NowPlayingContent(
                             if (favicon.isNotEmpty()) {
                                 AsyncImage(model = favicon, contentDescription = null, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
                             } else {
-                                Text(uiState.currentStation?.name?.take(2)?.uppercase() ?: "—", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                Text(uiState.currentStation?.name?.take(2)?.uppercase() ?: "—", color = Color.White, fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             }
                         }
                         Spacer(Modifier.width(8.dp))
                         Column {
                             Text(
                                 (uiState.currentStation?.bitrate?.takeIf { it > 0 }?.let { "${it}K" } ?: "LIVE") + (uiState.currentStation?.codec?.takeIf { it.isNotEmpty() }?.let { " • ${it.uppercase()}" } ?: ""),
-                                color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 0.8.sp
+                                color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 0.8.sp
                             )
                             if (uiState.currentStation?.countryCode?.length == 2) {
-                                Text("${countryCodeToEmoji(uiState.currentStation!!.countryCode)} ${uiState.currentStation!!.countryCode.uppercase()}", color = Color.White, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                Text("${countryCodeToEmoji(uiState.currentStation!!.countryCode)} ${uiState.currentStation!!.countryCode.uppercase()}", color = Color.White, fontFamily = DotMatrix, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -303,7 +303,7 @@ private fun NowPlayingContent(
                             .background(BrightRed)
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
-                        Text("${uiState.sleepRemainingMs / 60000}:${String.format("%02d", (uiState.sleepRemainingMs % 60000) / 1000)}", color = Color.White, fontFamily = Ndot57, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        Text("${uiState.sleepRemainingMs / 60000}:${String.format("%02d", (uiState.sleepRemainingMs % 60000) / 1000)}", color = Color.White, fontFamily = DotMatrix, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                     }
                 }
 
@@ -311,7 +311,7 @@ private fun NowPlayingContent(
                     Box(Modifier.fillMaxSize().background(Color.Black.copy(0.45f)), contentAlignment = Alignment.Center) {
                         val inf = rememberInfiniteTransition(label = "buf")
                         val d by inf.animateValue(0, 3, Int.VectorConverter, infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Restart), label = "d")
-                        Text("●".repeat(d + 1), color = BrightRed, fontFamily = Ndot57, fontSize = 14.sp)
+                        Text("●".repeat(d + 1), color = BrightRed, fontFamily = DotMatrix, fontSize = 14.sp)
                     }
                 }
             }
@@ -385,7 +385,7 @@ private fun NowPlayingContent(
                 .padding(horizontal = 14.dp, vertical = 2.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("VOL", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, letterSpacing = 1.sp)
+                Text("VOL", color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, letterSpacing = 1.sp)
                 Spacer(Modifier.width(10.dp))
                 val blocks = 10
                 val filled = (uiState.volume * blocks).toInt()
@@ -517,12 +517,12 @@ private fun NowPlayingContent(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("TRAY", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.5.sp)
-                    Text("${uiState.queue.size} SPECIMENS", color = TextWhite35, fontFamily = Ndot57, fontSize = 10.sp)
+                    Text("TRAY", color = Color.White, fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 11.sp, letterSpacing = 1.5.sp)
+                    Text("${uiState.queue.size} SPECIMENS", color = TextWhite35, fontFamily = DotMatrix, fontSize = 10.sp)
                 }
                 Spacer(Modifier.height(12.dp))
                 if (uiState.queue.isEmpty()) {
-                    Text("TRAY EMPTY — TUNE FROM BROWSE", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                    Text("TRAY EMPTY — TUNE FROM BROWSE", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp)
                 } else {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.heightIn(max = 360.dp)) {
                         itemsIndexed(uiState.queue, key = { i, _ -> i }) { idx, station ->
@@ -537,10 +537,10 @@ private fun NowPlayingContent(
                                     .padding(horizontal = 14.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(String.format("%02d", idx + 1), color = if (isCurrent) BrightRed else TextWhite35, fontFamily = Ndot57, fontSize = 10.sp, modifier = Modifier.width(28.dp))
+                                Text(String.format("%02d", idx + 1), color = if (isCurrent) BrightRed else TextWhite35, fontFamily = DotMatrix, fontSize = 10.sp, modifier = Modifier.width(28.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(station.name.uppercase(), color = if (isCurrent) Color.White else Color(0xFFCCCCCC), fontFamily = Ndot57, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text("${station.codec.uppercase().takeIf { it.isNotEmpty() } ?: "LIVE"} • ${station.bitrate.takeIf { it > 0 }?.let { "${it}K" } ?: ""}", color = TextWhite35, fontFamily = Ndot57, fontSize = 9.sp, maxLines = 1)
+                                    Text(station.name.uppercase(), color = if (isCurrent) Color.White else Color(0xFFCCCCCC), fontFamily = DotMatrix, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text("${station.codec.uppercase().takeIf { it.isNotEmpty() } ?: "LIVE"} • ${station.bitrate.takeIf { it > 0 }?.let { "${it}K" } ?: ""}", color = TextWhite35, fontFamily = DotMatrix, fontSize = 9.sp, maxLines = 1)
                                 }
                                 if (isCurrent) Box(Modifier.size(6.dp).clip(CircleShape).background(BrightRed))
                             }
@@ -583,8 +583,8 @@ private fun NowPlayingContent(
             shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("SLEEP", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.5.sp)
-                Text("Scope dims and tray stops", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp)
+                Text("SLEEP", color = Color.White, fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 12.sp, letterSpacing = 1.5.sp)
+                Text("Scope dims and tray stops", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp)
                 Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     listOf(5, 15, 30, 60).forEach { mins ->
@@ -593,7 +593,7 @@ private fun NowPlayingContent(
                             modifier = Modifier.weight(1f), shape = RoundedCornerShape(100.dp),
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                             border = androidx.compose.foundation.BorderStroke(1.dp, GridLine)
-                        ) { Text("${mins}M", fontFamily = Ndot57, fontSize = 11.sp) }
+                        ) { Text("${mins}M", fontFamily = DotMatrix, fontSize = 11.sp) }
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -601,7 +601,7 @@ private fun NowPlayingContent(
                     onClick = { onCancelSleepTimer(); showSleep = false },
                     modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(100.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = BrightRed)
-                ) { Text("CANCEL", fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
+                ) { Text("CANCEL", fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 11.sp) }
                 Spacer(Modifier.height(20.dp))
             }
         }
@@ -621,7 +621,7 @@ private fun UtilityChip(icon: androidx.compose.ui.graphics.vector.ImageVector, l
     ) {
         Icon(icon, contentDescription = label, tint = if (active) BrightRed else TextWhite35, modifier = Modifier.size(18.dp))
         Spacer(Modifier.height(3.dp))
-        Text(label, color = if (active) BrightRed else TextWhite35, fontFamily = Ndot57, fontSize = 8.sp, letterSpacing = 0.8.sp, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, color = if (active) BrightRed else TextWhite35, fontFamily = DotMatrix, fontSize = 8.sp, letterSpacing = 0.8.sp, fontWeight = if (active) FontWeight.Bold else FontWeight.Normal, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

@@ -36,7 +36,7 @@ import coil.request.ImageRequest
 import com.radiothing.domain.model.RadioStation
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
@@ -226,7 +226,7 @@ private fun PlaceholderContent(flag: String, initials: String) {
             Text(
                 text = initials,
                 color = Color.White,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 letterSpacing = 0.3.sp
@@ -319,7 +319,7 @@ fun StationListItem(
                     Text(
                         text = title,
                         color = Color.White,
-                        fontFamily = Ndot57,
+                        fontFamily = DotMatrix,
                         fontSize = if (compactMode) 14.sp else 15.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.25.sp,
@@ -346,7 +346,7 @@ fun StationListItem(
                             Text(
                                 text = "LIVE",
                                 color = BrightRed,
-                                fontFamily = Ndot57,
+                                fontFamily = DotMatrix,
                                 fontSize = 8.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
@@ -359,7 +359,7 @@ fun StationListItem(
                 Text(
                     text = metadata,
                     color = TextWhite70,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Medium,
                     letterSpacing = 0.25.sp,
@@ -372,7 +372,7 @@ fun StationListItem(
                 Text(
                     text = votesLabel,
                     color = TextWhite35,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 8.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 0.65.sp,

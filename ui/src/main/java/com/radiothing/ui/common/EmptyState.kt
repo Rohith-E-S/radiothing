@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -87,7 +87,7 @@ fun EmptyState(
                 Text(
                     text = title,
                     color = Color.White,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                     letterSpacing = 1.5.sp,
@@ -97,7 +97,7 @@ fun EmptyState(
                 Text(
                     text = subtitle,
                     color = TextWhite70,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 11.sp,
                     textAlign = TextAlign.Center,
                     lineHeight = 15.sp
@@ -106,7 +106,7 @@ fun EmptyState(
                 Text(
                     text = hint,
                     color = TextWhite35,
-                    fontFamily = Ndot57,
+                    fontFamily = DotMatrix,
                     fontSize = 9.sp,
                     letterSpacing = 1.sp,
                     textAlign = TextAlign.Center

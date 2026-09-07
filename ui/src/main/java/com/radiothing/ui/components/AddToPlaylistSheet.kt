@@ -44,7 +44,7 @@ import com.radiothing.domain.model.RadioStation
 import com.radiothing.ui.theme.BrightRed
 import com.radiothing.ui.theme.GridLine
 import com.radiothing.ui.theme.Ink
-import com.radiothing.ui.theme.Ndot57
+import com.radiothing.ui.theme.DotMatrix
 import com.radiothing.ui.theme.Panel
 import com.radiothing.ui.theme.TextWhite35
 import com.radiothing.ui.theme.TextWhite70
@@ -78,11 +78,11 @@ fun AddToPlaylistSheet(
         dragHandle = null
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("SEND TO TRAY", color = Color.White, fontFamily = Ndot57, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 1.5.sp)
+            Text("SEND TO TRAY", color = Color.White, fontFamily = DotMatrix, fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 1.5.sp)
             Text(
                 station.name.uppercase(),
                 color = TextWhite35,
-                fontFamily = Ndot57,
+                fontFamily = DotMatrix,
                 fontSize = 10.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -91,7 +91,7 @@ fun AddToPlaylistSheet(
             Spacer(Modifier.height(16.dp))
 
             if (playlists.isEmpty()) {
-                Text("NO TRAYS YET — NAME ONE BELOW", color = TextWhite35, fontFamily = Ndot57, fontSize = 11.sp, modifier = Modifier.padding(vertical = 8.dp))
+                Text("NO TRAYS YET — NAME ONE BELOW", color = TextWhite35, fontFamily = DotMatrix, fontSize = 11.sp, modifier = Modifier.padding(vertical = 8.dp))
             } else {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -122,7 +122,7 @@ fun AddToPlaylistSheet(
                                 Text(
                                     playlist.name.take(2).uppercase(),
                                     color = BrightRed,
-                                    fontFamily = Ndot57,
+                                    fontFamily = DotMatrix,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -131,14 +131,14 @@ fun AddToPlaylistSheet(
                             Text(
                                 playlist.name.uppercase(),
                                 color = Color.White,
-                                fontFamily = Ndot57,
+                                fontFamily = DotMatrix,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f)
                             )
-                            Text("$count", color = TextWhite35, fontFamily = Ndot57, fontSize = 10.sp)
+                            Text("$count", color = TextWhite35, fontFamily = DotMatrix, fontSize = 10.sp)
                         }
                     }
                 }
