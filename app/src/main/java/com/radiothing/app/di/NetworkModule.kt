@@ -26,8 +26,6 @@ object NetworkModule {
         }
         val fallbackUrls = listOf(
             "https://de1.api.radio-browser.info/",
-            "https://nl1.api.radio-browser.info/",
-            "https://at1.api.radio-browser.info/",
             "https://all.api.radio-browser.info/"
         )
         
