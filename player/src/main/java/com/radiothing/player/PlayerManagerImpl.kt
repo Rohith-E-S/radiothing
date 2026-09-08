@@ -58,8 +58,10 @@ class PlayerManagerImpl @Inject constructor(
     override val spectrumBins: StateFlow<FloatArray?> = _spectrumBins.asStateFlow()
     override fun onServiceSpectrumBins(bins: FloatArray) {
         // Set from the playback thread at ~45 Hz; StateFlow conflates, so slow
-        // collectors see only the freshest spectrum frame.
-        _spectrumBins.value = bins
+        // collectors see only the freshest spectrum frame. Keep an owned
+        // snapshot because the callback originates on the audio thread and
+        // the processor may reuse its working array for the next frame.
+        _spectrumBins.value = bins.copyOf()
     }
 
     // --- Internal ---
@@ -96,6 +98,7 @@ class PlayerManagerImpl @Inject constructor(
 
     override fun play(station: RadioStation, queue: List<RadioStation>, queueIndex: Int) {
         playedSinceAttach = true
+        _spectrumBins.value = null
         _playerState.update {
             it.copy(
                 currentStation = station,
@@ -111,6 +114,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun pause() {
+        _spectrumBins.value = null
         _pauseCommand.value = true
     }
 
@@ -128,6 +132,7 @@ class PlayerManagerImpl @Inject constructor(
     }
 
     override fun stop() {
+        _spectrumBins.value = null
         _pauseCommand.value = true
         _playerState.update { it.copy(isPlaying = false) }
         // Sleep-timer fade ended playback — restore pre-fade volume so the
@@ -216,12 +221,14 @@ class PlayerManagerImpl @Inject constructor(
     override fun attachServicePlayer(player: Player) {
         serviceAttached = true
         playedSinceAttach = false
+        _spectrumBins.value = null
         // State will come via callbacks
     }
 
     override fun detachServicePlayer() {
         serviceAttached = false
         playedSinceAttach = false
+        _spectrumBins.value = null
         _playerState.update { it.copy(isPlaying = false, isBuffering = false) }
     }
 
