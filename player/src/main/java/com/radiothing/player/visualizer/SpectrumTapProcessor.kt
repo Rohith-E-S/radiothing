@@ -68,6 +68,9 @@ class SpectrumTapProcessor(private val onBins: (FloatArray) -> Unit) : BaseAudio
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
+        val remaining = inputBuffer.remaining()
+        if (remaining == 0) return
+
         val frameBytes = channelCount * (if (inputAudioFormat.encoding == C.ENCODING_PCM_FLOAT) 4 else 2)
         val dup = inputBuffer.duplicate() // read via duplicate — analysis never disturbs the stream
 
@@ -84,8 +87,7 @@ class SpectrumTapProcessor(private val onBins: (FloatArray) -> Unit) : BaseAudio
             while (dup.hasRemaining()) pending[pendingSize++] = dup.get()
         }
         // Pass the untouched audio through to the next stage in the chain
-        val out = replaceOutputBuffer(inputBuffer.remaining())
-        out.put(inputBuffer)
+        replaceOutputBuffer(remaining).put(inputBuffer).flip()
     }
 
     private fun consumeFrame(frame: ByteBuffer, frameBytes: Int) {
@@ -107,7 +109,9 @@ class SpectrumTapProcessor(private val onBins: (FloatArray) -> Unit) : BaseAudio
     }
 
     private fun publishSpectrum() {
-        System.arraycopy(mono, 0, real, 0, FRAME_SIZE)
+        for (i in 0 until FRAME_SIZE) {
+            real[i] = mono[i].toDouble()
+        }
         java.util.Arrays.fill(imag, 0.0)
         fft(real, imag)
         // |X_k|·(4/N): N/2 for a sinusoid's DFT bin, ×2 Hann coherent gain
