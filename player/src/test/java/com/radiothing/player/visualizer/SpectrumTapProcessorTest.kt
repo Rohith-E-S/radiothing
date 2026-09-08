@@ -33,6 +33,7 @@ class SpectrumTapProcessorTest {
 
         assertEquals(0, input.remaining())
         assertEquals(sampleCount * 2, output.remaining())
+        assertEquals(512, binsReceived?.size)
     }
 
     @Test
