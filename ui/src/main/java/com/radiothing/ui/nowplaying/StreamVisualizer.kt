@@ -104,7 +104,10 @@ fun StreamDotEqualizer(
         val colW = (w - totalGap) / barCount
         val dotsPerRow = 8
         val dotRadius = (colW * 0.11f).coerceIn(1.6f, 2.4f)
-        val dotGapY = h / rowCount * 0.62f
+        // Keep the equalizer vertically compact, but use roughly the top
+        // four-fifths of the available height instead of leaving a large
+        // unused band above the bars.
+        val dotGapY = h / rowCount * 0.82f
         val dotGapX = colW / dotsPerRow
 
         for (bar in 0 until barCount) {
