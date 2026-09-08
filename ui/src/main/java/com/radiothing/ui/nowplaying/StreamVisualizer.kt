@@ -1,5 +1,10 @@
 package com.radiothing.ui.nowplaying
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +40,15 @@ fun StreamDotEqualizer(
     rowCount: Int = 26
 ) {
     val incomingBins by spectrumBins.collectAsStateWithLifecycle()
+    val fallbackTransition = rememberInfiniteTransition(label = "streamVisualizerFallback")
+    val fallbackPhase by fallbackTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * Math.PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1_400, easing = LinearEasing)
+        ),
+        label = "fallbackPhase"
+    )
 
     var fftLevels by remember { mutableStateOf<FloatArray?>(null) }
 
@@ -45,14 +59,16 @@ fun StreamDotEqualizer(
         incomingBins?.let { bins -> bandSpectrum(bins, barCount) }
     }
     LaunchedEffect(banded) {
-        if (banded != null) fftLevels = banded
+        // Clear the previous station's spectrum when the PCM path is absent
+        // (for example, an offloaded stream) so the fallback can take over.
+        fftLevels = banded
     }
 
     // Smoothing buffer — keeps motion from jittering
     var smoothed by remember { mutableStateOf(FloatArray(barCount) { 0.15f }) }
 
     // Smooth levels for rendering (lerp)
-    val displayLevels = remember(fftLevels, isPlaying, isBuffering) {
+    val displayLevels = remember(fftLevels, isPlaying, isBuffering, fallbackPhase) {
         if (fftLevels != null && isPlaying && !isBuffering) {
             val incoming = fftLevels!!
             for (i in smoothed.indices) {
@@ -61,15 +77,20 @@ fun StreamDotEqualizer(
             }
             smoothed.copyOf()
         } else if (isBuffering) {
-            // fake buffering sweep — gentle
-            FloatArray(barCount) { 0.35f }
+            // Animated fallback while the stream is buffering or offloaded.
+            FloatArray(barCount) { idx ->
+                (0.35f + kotlin.math.sin(fallbackPhase + idx * 0.58f) * 0.18f)
+                    .coerceIn(0.12f, 0.58f)
+            }
         } else if (!isPlaying) {
             FloatArray(barCount) { 0.08f }
         } else {
-            // no real data yet but playing — fake dance that will be replaced by FFT on next capture
+            // No real data yet but playing — fake dance that will be replaced
+            // by FFT on the next capture.
             FloatArray(barCount) { idx ->
                 val base = 0.45f - idx * 0.032f
-                (base + kotlin.math.sin(System.currentTimeMillis() / 280.0 + idx * 0.9).toFloat() * 0.12f).coerceIn(0.12f, 0.95f)
+                (base + kotlin.math.sin(fallbackPhase + idx * 0.9f) * 0.12f)
+                    .coerceIn(0.12f, 0.95f)
             }
         }
     }

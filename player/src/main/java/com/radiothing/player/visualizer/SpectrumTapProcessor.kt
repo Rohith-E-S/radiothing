@@ -120,7 +120,11 @@ class SpectrumTapProcessor(private val onBins: (FloatArray) -> Unit) : BaseAudio
         for (k in 0 until BIN_COUNT) {
             bins[k] = (hypot(real[k], imag[k]) * scale).toFloat().coerceIn(0f, 127f)
         }
-        onBins(bins)
+        // StateFlow/Compose use equality to decide whether to forward a new
+        // value. `bins` is reused for the next FFT, so publishing it directly
+        // would make every later frame look like the same array instance and
+        // the visualizer would stop receiving updates after the first frame.
+        onBins(bins.copyOf())
     }
 
     /** In-place iterative radix-2 FFT (FRAME_SIZE must be a power of two). */
