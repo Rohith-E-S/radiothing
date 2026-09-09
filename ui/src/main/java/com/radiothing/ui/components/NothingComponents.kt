@@ -71,7 +71,7 @@ fun NothingTextField(
             focusedTextColor = Color.White,
             unfocusedTextColor = Color.White,
             cursorColor = BrightRed,
-            focusedIndicatorColor = BrightRed,
+            focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = GridLine,
             disabledIndicatorColor = GridLine
         ),
