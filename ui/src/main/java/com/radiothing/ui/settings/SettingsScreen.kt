@@ -52,8 +52,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
     SettingsContent(
         appSettings = settings,
         appVersion = appVersion,
-        onSetBufferSize = viewModel::setBufferSize,
-        onSetUseAsciiNotification = viewModel::setUseAsciiNotification
+        onSetBufferSize = viewModel::setBufferSize
     )
 }
 
@@ -62,8 +61,7 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
 private fun SettingsContent(
     appSettings: AppSettings?,
     appVersion: String,
-    onSetBufferSize: (Int) -> Unit,
-    onSetUseAsciiNotification: (Boolean) -> Unit
+    onSetBufferSize: (Int) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -103,13 +101,6 @@ private fun SettingsContent(
                     suffix = "ms",
                     steps = 9,
                     onValueChange = { onSetBufferSize(it.toInt()) }
-                )
-                HorizontalDivider(color = GridLine)
-                SettingSwitch(
-                    title = "ASCII NOTIFICATION",
-                    subtitle = "Use block art in notification",
-                    checked = appSettings.useAsciiNotification,
-                    onCheckedChange = { onSetUseAsciiNotification(it) }
                 )
             }
 
@@ -192,42 +183,6 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-fun SettingSwitch(
-    title: String,
-    subtitle: String? = null,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, color = Color.White, fontFamily = DotMatrix, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
-            if (subtitle != null) {
-                Text(text = subtitle, color = TextWhite35, fontFamily = DotMatrix, fontSize = 10.sp, modifier = Modifier.padding(top = 2.dp))
-            }
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = BrightRed,
-                checkedBorderColor = BrightRed,
-                uncheckedThumbColor = Color(0xFF9A9A9E),
-                uncheckedTrackColor = GridLine,
-                uncheckedBorderColor = GridLine
-            )
-        )
-    }
-}
-
-@Composable
 fun SettingSlider(
     title: String,
     value: Float,
@@ -274,10 +229,9 @@ fun SettingSlider(
 private fun SettingsScreenPreview() {
     RadioThingTheme {
         SettingsContent(
-            appSettings = AppSettings(useAsciiNotification = true, bufferSize = 5000),
+            appSettings = AppSettings(bufferSize = 5000),
             appVersion = "1.2.0",
-            onSetBufferSize = {},
-            onSetUseAsciiNotification = {}
+            onSetBufferSize = {}
         )
     }
 }
@@ -289,19 +243,6 @@ private fun SettingRowStatesPreview() {
         Column(Modifier.padding(16.dp)) {
             SettingSectionHeader(title = "PLAYBACK")
             SettingsCard {
-                SettingSwitch(
-                    title = "ASCII NOTIFICATION",
-                    subtitle = "Use block art in notification",
-                    checked = true,
-                    onCheckedChange = {}
-                )
-                HorizontalDivider(color = GridLine)
-                SettingSwitch(
-                    title = "ASCII NOTIFICATION",
-                    checked = false,
-                    onCheckedChange = {}
-                )
-                HorizontalDivider(color = GridLine)
                 SettingSlider(
                     title = "BUFFER SIZE",
                     value = 5000f,

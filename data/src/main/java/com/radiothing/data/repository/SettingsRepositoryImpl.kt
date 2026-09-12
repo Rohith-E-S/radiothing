@@ -15,10 +15,6 @@ class SettingsRepositoryImpl @Inject constructor(
     }
 
 
-    override suspend fun updateUseAsciiNotification(useAscii: Boolean) {
-        dataStore.updateUseAsciiNotification(useAscii)
-    }
-
     override suspend fun updateBufferSize(size: Int) {
         dataStore.updateBufferSize(size)
     }
