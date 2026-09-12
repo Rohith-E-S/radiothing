@@ -17,8 +17,4 @@ class SettingsViewModel @Inject constructor(
     fun setBufferSize(size: Int) {
         viewModelScope.launch { settingsRepository.updateBufferSize(size) }
     }
-
-    fun setUseAsciiNotification(useAscii: Boolean) {
-        viewModelScope.launch { settingsRepository.updateUseAsciiNotification(useAscii) }
-    }
 }

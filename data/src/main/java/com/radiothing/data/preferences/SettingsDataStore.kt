@@ -2,7 +2,6 @@ package com.radiothing.data.preferences
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -17,7 +16,6 @@ class SettingsDataStore @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
     companion object {
-        val USE_ASCII_NOTIFICATION = booleanPreferencesKey("use_ascii_notification")
         val BUFFER_SIZE = intPreferencesKey("buffer_size")
     }
 
@@ -33,16 +31,9 @@ class SettingsDataStore @Inject constructor(
         }
         .map { preferences ->
             AppSettings(
-                useAsciiNotification = preferences[USE_ASCII_NOTIFICATION] ?: false,
                 bufferSize = preferences[BUFFER_SIZE] ?: 5000,
             )
         }
-
-    suspend fun updateUseAsciiNotification(useAscii: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[USE_ASCII_NOTIFICATION] = useAscii
-        }
-    }
 
     suspend fun updateBufferSize(size: Int) {
         dataStore.edit { preferences ->
